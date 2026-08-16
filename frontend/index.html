@@ -1,0 +1,2934 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Kashomba Electrical Management System"
+    >
+
+    <title>
+        Kashomba Electrical Management System
+    </title>
+
+
+    <!-- ================================
+         ICONS
+    ================================= -->
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+
+    <!-- ================================
+         MAIN CSS
+    ================================= -->
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- ==================================================
+     MOBILE SIDEBAR OVERLAY
+================================================== -->
+
+<div
+    id="sidebarOverlay"
+    class="sidebar-overlay"
+></div>
+
+
+
+<!-- ==================================================
+     SIDEBAR
+================================================== -->
+
+<aside
+    id="sidebar"
+    class="sidebar"
+>
+
+
+    <!-- SIDEBAR HEADER -->
+
+    <div class="sidebar-header">
+
+        <div class="logo">
+
+
+            <!--
+                LOGO
+                Weka logo yako hapa:
+                assets/icons/logo.png
+
+                Kama jina ni tofauti,
+                badilisha logo.png.
+            -->
+
+            <div class="logo-icon">
+
+                <img
+                    src="assets/icons/logo.png"
+                    alt="Kashomba Electrical Logo"
+                    style="
+                        width:100%;
+                        height:100%;
+                        object-fit:contain;
+                        border-radius:10px;
+                    "
+                >
+
+            </div>
+
+
+            <div class="logo-text">
+
+                <h2>
+                    KASHOMBA
+                </h2>
+
+                <span>
+                    ELECTRICAL
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- MOBILE CLOSE -->
+
+        <button
+            id="sidebarClose"
+            class="sidebar-close"
+            type="button"
+        >
+
+            <i class="fa-solid fa-xmark"></i>
+
+        </button>
+
+    </div>
+
+
+
+    <!-- ==================================================
+         NAVIGATION
+    ================================================== -->
+
+    <nav class="sidebar-nav">
+
+
+        <!-- MAIN -->
+
+        <div class="nav-title">
+            MAIN
+        </div>
+
+
+        <a
+            href="#"
+            class="nav-link active"
+            data-page="dashboard"
+        >
+
+            <i class="fa-solid fa-gauge-high"></i>
+
+            <span>
+                Dashboard
+            </span>
+
+        </a>
+
+
+
+        <!-- MANAGEMENT -->
+
+        <div class="nav-title">
+            MANAGEMENT
+        </div>
+
+
+        <a
+            href="#"
+            class="nav-link"
+            data-page="customers"
+        >
+
+            <i class="fa-solid fa-users"></i>
+
+            <span>
+                Wateja
+            </span>
+
+        </a>
+
+
+        <a
+            href="#"
+            class="nav-link"
+            data-page="items"
+        >
+
+            <i class="fa-solid fa-boxes-stacked"></i>
+
+            <span>
+                Vifaa
+            </span>
+
+        </a>
+
+
+        <a
+            href="#"
+            class="nav-link"
+            data-page="invoices"
+        >
+
+            <i class="fa-solid fa-file-invoice"></i>
+
+            <span>
+                Invoice
+            </span>
+
+        </a>
+
+
+        <a
+            href="#"
+            class="nav-link"
+            data-page="payments"
+        >
+
+            <i class="fa-solid fa-money-bill-wave"></i>
+
+            <span>
+                Malipo
+            </span>
+
+        </a>
+
+
+
+        <!-- OPERATIONS -->
+
+        <div class="nav-title">
+            OPERATIONS
+        </div>
+
+
+        <a
+            href="#"
+            class="nav-link"
+            data-page="staff"
+        >
+
+            <i class="fa-solid fa-helmet-safety"></i>
+
+            <span>
+                Wafanyakazi
+            </span>
+
+        </a>
+
+
+        <a
+            href="#"
+            class="nav-link"
+            data-page="expenses"
+        >
+
+            <i class="fa-solid fa-wallet"></i>
+
+            <span>
+                Matumizi
+            </span>
+
+        </a>
+
+
+
+        <!-- REPORTS -->
+
+        <div class="nav-title">
+            REPORTS
+        </div>
+
+
+        <a
+            href="#"
+            class="nav-link"
+            data-page="reports"
+        >
+
+            <i class="fa-solid fa-chart-column"></i>
+
+            <span>
+                Ripoti
+            </span>
+
+        </a>
+
+    </nav>
+
+
+
+    <!-- ==================================================
+         SIDEBAR FOOTER
+    ================================================== -->
+
+    <div class="sidebar-footer">
+
+
+        <div class="system-status">
+
+            <span class="status-dot"></span>
+
+            <span>
+                System Online
+            </span>
+
+        </div>
+
+
+        <div class="copyright">
+
+            Kashomba Electrical Management System
+
+        </div>
+
+    </div>
+
+
+</aside>
+
+
+
+<!-- ==================================================
+     MAIN CONTENT
+================================================== -->
+
+<main class="main-content">
+
+
+
+    <!-- ==================================================
+         TOPBAR
+    ================================================== -->
+
+    <header class="topbar">
+
+
+        <div
+            style="
+                display:flex;
+                align-items:center;
+                gap:15px;
+            "
+        >
+
+
+            <!-- MOBILE MENU -->
+
+            <button
+                id="menuToggle"
+                class="menu-toggle"
+                type="button"
+            >
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+
+
+
+            <!-- PAGE HEADING -->
+
+            <div class="page-heading">
+
+                <h1 id="pageTitle">
+                    Dashboard
+                </h1>
+
+                <p id="pageSubtitle">
+                    Muhtasari wa shughuli za ofisi
+                </p>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- TOPBAR RIGHT -->
+
+        <div class="topbar-right">
+
+
+            <div
+                id="currentDate"
+                class="current-date"
+            >
+                Loading...
+            </div>
+
+
+            <div class="user-profile">
+
+
+                <div class="user-avatar">
+
+                    <i class="fa-solid fa-user"></i>
+
+                </div>
+
+
+                <div class="user-info">
+
+                    <strong>
+                        Admin
+                    </strong>
+
+                    <span>
+                        Administrator
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- ==================================================
+         PAGE CONTAINER
+    ================================================== -->
+
+    <div class="page-container">
+
+
+
+        <!-- ==================================================
+             DASHBOARD
+        ================================================== -->
+
+        <section
+            id="page-dashboard"
+            class="page active-page"
+        >
+
+
+            <!-- WELCOME -->
+
+            <div class="welcome-banner">
+
+
+                <div>
+
+                    <div class="welcome-small">
+                        KASHOMBA ELECTRICAL
+                    </div>
+
+
+                    <h2>
+                        Karibu kwenye Dashboard
+                    </h2>
+
+
+                    <p>
+                        Simamia wateja, vifaa, invoices,
+                        malipo, wafanyakazi na matumizi
+                        ya miradi yako sehemu moja.
+                    </p>
+
+                </div>
+
+
+                <div class="welcome-icon">
+
+                    <i class="fa-solid fa-bolt"></i>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- STATISTICS -->
+
+            <div class="stats-grid">
+
+
+                <!-- CUSTOMERS -->
+
+                <div class="stat-card">
+
+                    <div
+                        class="stat-icon customers-icon"
+                    >
+
+                        <i class="fa-solid fa-users"></i>
+
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Wateja
+                        </span>
+
+                        <h3 id="dashboardCustomers">
+                            0
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- INVOICES -->
+
+                <div class="stat-card">
+
+                    <div
+                        class="stat-icon invoice-icon"
+                    >
+
+                        <i class="fa-solid fa-file-invoice"></i>
+
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Invoices
+                        </span>
+
+                        <h3 id="dashboardInvoices">
+                            0
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- PAYMENTS -->
+
+                <div class="stat-card">
+
+                    <div
+                        class="stat-icon payment-icon"
+                    >
+
+                        <i class="fa-solid fa-money-bill-wave"></i>
+
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Malipo
+                        </span>
+
+                        <h3 id="dashboardPayments">
+                            TZS 0
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- PROFIT -->
+
+                <div class="stat-card">
+
+                    <div
+                        class="stat-icon profit-icon"
+                    >
+
+                        <i class="fa-solid fa-chart-line"></i>
+
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Profit
+                        </span>
+
+                        <h3 id="dashboardProfit">
+                            TZS 0
+                        </h3>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- DASHBOARD GRID -->
+
+            <div class="dashboard-grid">
+
+
+                <!-- RECENT INVOICES -->
+
+                <div class="content-card">
+
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <h3>
+                                Invoices za Karibuni
+                            </h3>
+
+                            <span>
+                                Muhtasari wa invoices
+                            </span>
+
+                        </div>
+
+
+                        <button
+                            class="btn btn-outline"
+                            data-page="invoices"
+                            type="button"
+                        >
+
+                            <i class="fa-solid fa-arrow-right"></i>
+
+                            Zote
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-container">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Invoice
+                                    </th>
+
+                                    <th>
+                                        Mteja
+                                    </th>
+
+                                    <th>
+                                        Tarehe
+                                    </th>
+
+                                    <th>
+                                        Jumla
+                                    </th>
+
+                                    <th>
+                                        Hali
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody
+                                id="dashboardInvoicesTable"
+                            >
+
+                                <tr>
+
+                                    <td
+                                        colspan="5"
+                                        class="empty-state"
+                                    >
+
+                                        Hakuna invoice kwa sasa.
+
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- QUICK ACTIONS -->
+
+                <div class="content-card">
+
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <h3>
+                                Quick Actions
+                            </h3>
+
+                            <span>
+                                Vitendo vya haraka
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="quick-actions">
+
+
+                        <button
+                            class="quick-action"
+                            data-page="customers"
+                            type="button"
+                        >
+
+                            <i class="fa-solid fa-user-plus"></i>
+
+                            <span>
+                                Ongeza Mteja
+                            </span>
+
+                        </button>
+
+
+                        <button
+                            class="quick-action"
+                            data-page="items"
+                            type="button"
+                        >
+
+                            <i class="fa-solid fa-box-open"></i>
+
+                            <span>
+                                Ongeza Kifaa
+                            </span>
+
+                        </button>
+
+
+                        <button
+                            class="quick-action"
+                            data-page="invoices"
+                            type="button"
+                        >
+
+                            <i class="fa-solid fa-file-circle-plus"></i>
+
+                            <span>
+                                Tengeneza Invoice
+                            </span>
+
+                        </button>
+
+
+                        <button
+                            class="quick-action"
+                            data-page="payments"
+                            type="button"
+                        >
+
+                            <i class="fa-solid fa-cash-register"></i>
+
+                            <span>
+                                Rekodi Malipo
+                            </span>
+
+                        </button>
+
+
+                        <button
+                            class="quick-action"
+                            data-page="staff"
+                            type="button"
+                        >
+
+                            <i class="fa-solid fa-user-gear"></i>
+
+                            <span>
+                                Ongeza Fundi
+                            </span>
+
+                        </button>
+
+
+                        <button
+                            class="quick-action"
+                            data-page="expenses"
+                            type="button"
+                        >
+
+                            <i class="fa-solid fa-receipt"></i>
+
+                            <span>
+                                Ongeza Matumizi
+                            </span>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             CUSTOMERS
+        ================================================== -->
+
+        <section
+            id="page-customers"
+            class="page"
+        >
+
+
+            <div class="page-toolbar">
+
+
+                <div>
+
+                    <h2>
+                        Wateja
+                    </h2>
+
+                    <p>
+                        Ongeza na simamia taarifa za wateja
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="addCustomerButton"
+                    class="btn btn-primary"
+                    type="button"
+                >
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    Ongeza Mteja
+
+                </button>
+
+            </div>
+
+
+
+            <!-- CUSTOMER FORM -->
+
+            <div
+                id="customerFormCard"
+                class="content-card"
+                style="display:none; margin-bottom:20px;"
+            >
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Ongeza Mteja Mpya
+                        </h3>
+
+                        <span>
+                            Jaza taarifa za mteja
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="customerForm"
+                    style="padding:20px;"
+                >
+
+                    <div
+                        style="
+                            display:grid;
+                            grid-template-columns:
+                            repeat(2,1fr);
+                            gap:15px;
+                        "
+                    >
+
+                        <div>
+
+                            <label>
+                                Jina la Mteja *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="customerName"
+                                name="jina"
+                                required
+                                placeholder="Mfano: John Doe"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Namba ya Simu *
+                            </label>
+
+                            <input
+                                type="tel"
+                                id="customerPhone"
+                                name="simu"
+                                required
+                                placeholder="07XXXXXXXX"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Anwani
+                            </label>
+
+                            <input
+                                type="text"
+                                id="customerAddress"
+                                name="anwani"
+                                placeholder="Mfano: Songea"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                P.O. Box
+                            </label>
+
+                            <input
+                                type="text"
+                                id="customerPobox"
+                                name="pobox"
+                                placeholder="P.O. Box"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="customerEmail"
+                                name="email"
+                                placeholder="example@email.com"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:flex-end;
+                            gap:10px;
+                            margin-top:20px;
+                        "
+                    >
+
+                        <button
+                            type="button"
+                            id="cancelCustomerButton"
+                            class="btn btn-outline"
+                        >
+                            Cancel
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+
+                            <i class="fa-solid fa-save"></i>
+
+                            Hifadhi Mteja
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+
+            <!-- CUSTOMER LIST -->
+
+            <div class="content-card">
+
+
+                <div class="search-bar">
+
+                    <i class="fa-solid fa-search"></i>
+
+                    <input
+                        type="search"
+                        id="customerSearch"
+                        placeholder="Tafuta mteja..."
+                    >
+
+                </div>
+
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    ID
+                                </th>
+
+                                <th>
+                                    Jina
+                                </th>
+
+                                <th>
+                                    Simu
+                                </th>
+
+                                <th>
+                                    Anwani
+                                </th>
+
+                                <th>
+                                    P.O. Box
+                                </th>
+
+                                <th>
+                                    Email
+                                </th>
+
+                                <th>
+                                    Tarehe
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody
+                            id="customersTableBody"
+                        >
+
+                            <tr>
+
+                                <td
+                                    colspan="7"
+                                    class="empty-state"
+                                >
+                                    Inapakia...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             ITEMS
+        ================================================== -->
+
+        <section
+            id="page-items"
+            class="page"
+        >
+
+
+            <div class="page-toolbar">
+
+
+                <div>
+
+                    <h2>
+                        Vifaa
+                    </h2>
+
+                    <p>
+                        Catalog ya vifaa na bei
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="addItemButton"
+                    class="btn btn-primary"
+                    type="button"
+                >
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    Ongeza Kifaa
+
+                </button>
+
+            </div>
+
+
+
+            <!-- ITEM FORM -->
+
+            <div
+                id="itemFormCard"
+                class="content-card"
+                style="display:none; margin-bottom:20px;"
+            >
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Ongeza Kifaa
+                        </h3>
+
+                        <span>
+                            Ingiza taarifa za kifaa
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="itemForm"
+                    style="padding:20px;"
+                >
+
+                    <div
+                        style="
+                            display:grid;
+                            grid-template-columns:
+                            repeat(3,1fr);
+                            gap:15px;
+                        "
+                    >
+
+                        <div>
+
+                            <label>
+                                Jina la Kifaa *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="itemName"
+                                name="jina"
+                                required
+                                placeholder="Mfano: CCTV Camera"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Kiasi
+                            </label>
+
+                            <input
+                                type="number"
+                                id="itemQuantity"
+                                name="kiasi"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Bei
+                            </label>
+
+                            <input
+                                type="number"
+                                id="itemPrice"
+                                name="bei"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:flex-end;
+                            gap:10px;
+                            margin-top:20px;
+                        "
+                    >
+
+                        <button
+                            type="button"
+                            id="cancelItemButton"
+                            class="btn btn-outline"
+                        >
+                            Cancel
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+
+                            <i class="fa-solid fa-save"></i>
+
+                            Hifadhi Kifaa
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+
+            <!-- ITEMS TABLE -->
+
+            <div class="content-card">
+
+
+                <div class="search-bar">
+
+                    <i class="fa-solid fa-search"></i>
+
+                    <input
+                        type="search"
+                        id="itemSearch"
+                        placeholder="Tafuta kifaa..."
+                    >
+
+                </div>
+
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    ID
+                                </th>
+
+                                <th>
+                                    Jina
+                                </th>
+
+                                <th>
+                                    Kiasi
+                                </th>
+
+                                <th>
+                                    Bei
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody
+                            id="itemsTableBody"
+                        >
+
+                            <tr>
+
+                                <td
+                                    colspan="4"
+                                    class="empty-state"
+                                >
+                                    Inapakia...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             INVOICES
+        ================================================== -->
+
+        <section
+            id="page-invoices"
+            class="page"
+        >
+
+
+            <div class="page-toolbar">
+
+
+                <div>
+
+                    <h2>
+                        Invoice
+                    </h2>
+
+                    <p>
+                        Tengeneza na simamia invoices
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="createInvoiceButton"
+                    class="btn btn-primary"
+                    type="button"
+                >
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    Tengeneza Invoice
+
+                </button>
+
+            </div>
+
+
+
+            <!-- INVOICE FORM -->
+
+            <div
+                id="invoiceFormCard"
+                class="content-card"
+                style="display:none; margin-bottom:20px;"
+            >
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Tengeneza Invoice Mpya
+                        </h3>
+
+                        <span>
+                            Jaza taarifa za invoice
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="invoiceForm"
+                    style="padding:20px;"
+                >
+
+
+                    <div
+                        style="
+                            display:grid;
+                            grid-template-columns:
+                            2fr 1fr;
+                            gap:15px;
+                        "
+                    >
+
+
+                        <div>
+
+                            <label>
+                                Mteja *
+                            </label>
+
+                            <select
+                                id="invoiceCustomer"
+                                name="mteja"
+                                required
+                            >
+
+                                <option value="">
+                                    Chagua Mteja
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Tarehe
+                            </label>
+
+                            <input
+                                type="date"
+                                id="invoiceDate"
+                                name="tarehe"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- INVOICE ITEMS -->
+
+                    <div
+                        style="
+                            margin-top:20px;
+                            margin-bottom:10px;
+                            display:flex;
+                            justify-content:space-between;
+                            align-items:center;
+                        "
+                    >
+
+                        <strong>
+                            Vifaa
+                        </strong>
+
+
+                        <button
+                            type="button"
+                            id="addInvoiceItemButton"
+                            class="btn btn-outline"
+                        >
+
+                            <i class="fa-solid fa-plus"></i>
+
+                            Ongeza Kifaa
+
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="invoiceItemsContainer"
+                    >
+
+                    </div>
+
+
+
+                    <!-- CHARGES -->
+
+                    <div
+                        style="
+                            display:grid;
+                            grid-template-columns:
+                            repeat(3,1fr);
+                            gap:15px;
+                            margin-top:20px;
+                        "
+                    >
+
+                        <div>
+
+                            <label>
+                                Labour
+                            </label>
+
+                            <input
+                                type="number"
+                                id="invoiceLabour"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Discount
+                            </label>
+
+                            <input
+                                type="number"
+                                id="invoiceDiscount"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Total
+                            </label>
+
+                            <input
+                                type="text"
+                                id="invoiceTotal"
+                                value="TZS 0"
+                                readonly
+                            >
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:flex-end;
+                            gap:10px;
+                            margin-top:20px;
+                        "
+                    >
+
+                        <button
+                            type="button"
+                            id="cancelInvoiceButton"
+                            class="btn btn-outline"
+                        >
+                            Cancel
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+
+                            <i class="fa-solid fa-file-invoice"></i>
+
+                            Hifadhi Invoice
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+
+            <!-- INVOICE TABLE -->
+
+            <div class="content-card">
+
+
+                <div class="search-bar">
+
+                    <i class="fa-solid fa-search"></i>
+
+                    <input
+                        type="search"
+                        id="invoiceSearch"
+                        placeholder="Tafuta invoice au mteja..."
+                    >
+
+                </div>
+
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Invoice No
+                                </th>
+
+                                <th>
+                                    Mteja
+                                </th>
+
+                                <th>
+                                    Tarehe
+                                </th>
+
+                                <th>
+                                    Subtotal
+                                </th>
+
+                                <th>
+                                    Labour
+                                </th>
+
+                                <th>
+                                    Discount
+                                </th>
+
+                                <th>
+                                    Jumla
+                                </th>
+
+                                <th>
+                                    Hali
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody
+                            id="invoicesTableBody"
+                        >
+
+                            <tr>
+
+                                <td
+                                    colspan="8"
+                                    class="empty-state"
+                                >
+                                    Inapakia...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             PAYMENTS
+        ================================================== -->
+
+        <section
+            id="page-payments"
+            class="page"
+        >
+
+
+            <div class="page-toolbar">
+
+
+                <div>
+
+                    <h2>
+                        Malipo
+                    </h2>
+
+                    <p>
+                        Rekodi na fuatilia malipo
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="recordPaymentButton"
+                    class="btn btn-primary"
+                    type="button"
+                >
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    Rekodi Malipo
+
+                </button>
+
+            </div>
+
+
+
+            <!-- PAYMENT FORM -->
+
+            <div
+                id="paymentFormCard"
+                class="content-card"
+                style="display:none; margin-bottom:20px;"
+            >
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Rekodi Malipo
+                        </h3>
+
+                        <span>
+                            Ingiza taarifa za malipo
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="paymentForm"
+                    style="padding:20px;"
+                >
+
+                    <div
+                        style="
+                            display:grid;
+                            grid-template-columns:
+                            repeat(3,1fr);
+                            gap:15px;
+                        "
+                    >
+
+
+                        <div>
+
+                            <label>
+                                Invoice *
+                            </label>
+
+                            <select
+                                id="paymentInvoice"
+                                required
+                            >
+
+                                <option value="">
+                                    Chagua Invoice
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Kiasi *
+                            </label>
+
+                            <input
+                                type="number"
+                                id="paymentAmount"
+                                min="1"
+                                required
+                                placeholder="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Njia ya Malipo *
+                            </label>
+
+                            <select
+                                id="paymentMethod"
+                                required
+                            >
+
+                                <option value="">
+                                    Chagua
+                                </option>
+
+                                <option value="CASH">
+                                    CASH
+                                </option>
+
+                                <option value="M-PESA">
+                                    M-PESA
+                                </option>
+
+                                <option value="NMB">
+                                    NMB
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:flex-end;
+                            gap:10px;
+                            margin-top:20px;
+                        "
+                    >
+
+                        <button
+                            type="button"
+                            id="cancelPaymentButton"
+                            class="btn btn-outline"
+                        >
+                            Cancel
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+
+                            <i class="fa-solid fa-money-bill"></i>
+
+                            Hifadhi Malipo
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+
+            <!-- PAYMENTS TABLE -->
+
+            <div class="content-card">
+
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Payment ID
+                                </th>
+
+                                <th>
+                                    Invoice No
+                                </th>
+
+                                <th>
+                                    Kiasi
+                                </th>
+
+                                <th>
+                                    Tarehe
+                                </th>
+
+                                <th>
+                                    Njia
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody
+                            id="paymentsTableBody"
+                        >
+
+                            <tr>
+
+                                <td
+                                    colspan="5"
+                                    class="empty-state"
+                                >
+                                    Inapakia...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             STAFF
+        ================================================== -->
+
+        <section
+            id="page-staff"
+            class="page"
+        >
+
+
+            <div class="page-toolbar">
+
+
+                <div>
+
+                    <h2>
+                        Wafanyakazi
+                    </h2>
+
+                    <p>
+                        Simamia mafundi na viwango vyao
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="addStaffButton"
+                    class="btn btn-primary"
+                    type="button"
+                >
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    Ongeza Fundi
+
+                </button>
+
+            </div>
+
+
+
+            <!-- STAFF FORM -->
+
+            <div
+                id="staffFormCard"
+                class="content-card"
+                style="display:none; margin-bottom:20px;"
+            >
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Ongeza Fundi
+                        </h3>
+
+                        <span>
+                            Ingiza taarifa za fundi
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="staffForm"
+                    style="padding:20px;"
+                >
+
+                    <div
+                        style="
+                            display:grid;
+                            grid-template-columns:
+                            repeat(3,1fr);
+                            gap:15px;
+                        "
+                    >
+
+                        <div>
+
+                            <label>
+                                Jina *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="staffName"
+                                required
+                                placeholder="Jina la fundi"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Simu
+                            </label>
+
+                            <input
+                                type="tel"
+                                id="staffPhone"
+                                placeholder="07XXXXXXXX"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Kiwango kwa Siku
+                            </label>
+
+                            <input
+                                type="number"
+                                id="staffRate"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:flex-end;
+                            gap:10px;
+                            margin-top:20px;
+                        "
+                    >
+
+                        <button
+                            type="button"
+                            id="cancelStaffButton"
+                            class="btn btn-outline"
+                        >
+                            Cancel
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+
+                            <i class="fa-solid fa-save"></i>
+
+                            Hifadhi Fundi
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+
+            <!-- STAFF TABLE -->
+
+            <div class="content-card">
+
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Staff ID
+                                </th>
+
+                                <th>
+                                    Jina
+                                </th>
+
+                                <th>
+                                    Simu
+                                </th>
+
+                                <th>
+                                    Kiwango kwa Siku
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody
+                            id="staffTableBody"
+                        >
+
+                            <tr>
+
+                                <td
+                                    colspan="4"
+                                    class="empty-state"
+                                >
+                                    Inapakia...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             EXPENSES
+        ================================================== -->
+
+        <section
+            id="page-expenses"
+            class="page"
+        >
+
+
+            <div class="page-toolbar">
+
+
+                <div>
+
+                    <h2>
+                        Matumizi
+                    </h2>
+
+                    <p>
+                        Simamia gharama za projects
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="addExpenseButton"
+                    class="btn btn-primary"
+                    type="button"
+                >
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    Ongeza Matumizi
+
+                </button>
+
+            </div>
+
+
+
+            <!-- EXPENSE FORM -->
+
+            <div
+                id="expenseFormCard"
+                class="content-card"
+                style="display:none; margin-bottom:20px;"
+            >
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Ongeza Matumizi
+                        </h3>
+
+                        <span>
+                            Ingiza gharama za project
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="expenseForm"
+                    style="padding:20px;"
+                >
+
+
+                    <div
+                        style="
+                            display:grid;
+                            grid-template-columns:
+                            repeat(3,1fr);
+                            gap:15px;
+                        "
+                    >
+
+
+                        <div>
+
+                            <label>
+                                Project *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="expenseProject"
+                                required
+                                placeholder="Jina la project"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Aina
+                            </label>
+
+                            <input
+                                type="text"
+                                id="expenseType"
+                                placeholder="Installation"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Sehemu
+                            </label>
+
+                            <input
+                                type="text"
+                                id="expenseLocation"
+                                placeholder="Songea"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Fundi
+                            </label>
+
+                            <select
+                                id="expenseStaff"
+                            >
+
+                                <option value="">
+                                    Chagua Fundi
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Siku
+                            </label>
+
+                            <input
+                                type="number"
+                                id="expenseDays"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Malazi
+                            </label>
+
+                            <input
+                                type="number"
+                                id="expenseAccommodation"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Usafiri
+                            </label>
+
+                            <input
+                                type="number"
+                                id="expenseTransport"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Chakula
+                            </label>
+
+                            <input
+                                type="number"
+                                id="expenseFood"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Vifaa
+                            </label>
+
+                            <input
+                                type="number"
+                                id="expenseEquipment"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Mengine
+                            </label>
+
+                            <input
+                                type="number"
+                                id="expenseOther"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Budget
+                            </label>
+
+                            <input
+                                type="number"
+                                id="expenseBudget"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Labour Charge
+                            </label>
+
+                            <input
+                                type="number"
+                                id="expenseLabourCharge"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label>
+                                Invoice No
+                            </label>
+
+                            <select
+                                id="expenseInvoice"
+                            >
+
+                                <option value="">
+                                    Chagua Invoice
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:flex-end;
+                            gap:10px;
+                            margin-top:20px;
+                        "
+                    >
+
+                        <button
+                            type="button"
+                            id="cancelExpenseButton"
+                            class="btn btn-outline"
+                        >
+                            Cancel
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+
+                            <i class="fa-solid fa-save"></i>
+
+                            Hifadhi Matumizi
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+
+            <!-- EXPENSE TABLE -->
+
+            <div class="content-card">
+
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Expense ID
+                                </th>
+
+                                <th>
+                                    Project
+                                </th>
+
+                                <th>
+                                    Aina
+                                </th>
+
+                                <th>
+                                    Fundi
+                                </th>
+
+                                <th>
+                                    Staff Cost
+                                </th>
+
+                                <th>
+                                    Total Cost
+                                </th>
+
+                                <th>
+                                    Profit
+                                </th>
+
+                                <th>
+                                    Tarehe
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody
+                            id="expensesTableBody"
+                        >
+
+                            <tr>
+
+                                <td
+                                    colspan="8"
+                                    class="empty-state"
+                                >
+                                    Inapakia...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             REPORTS
+        ================================================== -->
+
+        <section
+            id="page-reports"
+            class="page"
+        >
+
+
+            <div class="page-toolbar">
+
+
+                <div>
+
+                    <h2>
+                        Ripoti
+                    </h2>
+
+                    <p>
+                        Ripoti za biashara na fedha
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- REPORT CARDS -->
+
+            <div class="reports-grid">
+
+
+                <div class="report-card">
+
+                    <i class="fa-solid fa-users"></i>
+
+                    <h3>
+                        Ripoti za Wateja
+                    </h3>
+
+                    <p>
+                        Angalia taarifa na idadi ya
+                        wateja wote.
+                    </p>
+
+                    <button
+                        class="btn btn-outline"
+                        type="button"
+                        data-report="customers"
+                    >
+
+                        Fungua Ripoti
+
+                    </button>
+
+                </div>
+
+
+
+                <div class="report-card">
+
+                    <i class="fa-solid fa-file-invoice"></i>
+
+                    <h3>
+                        Ripoti za Invoice
+                    </h3>
+
+                    <p>
+                        Angalia invoices na hali za malipo.
+                    </p>
+
+                    <button
+                        class="btn btn-outline"
+                        type="button"
+                        data-report="invoices"
+                    >
+
+                        Fungua Ripoti
+
+                    </button>
+
+                </div>
+
+
+
+                <div class="report-card">
+
+                    <i class="fa-solid fa-money-bill-wave"></i>
+
+                    <h3>
+                        Ripoti za Malipo
+                    </h3>
+
+                    <p>
+                        Fuatilia malipo yote yaliyopokelewa.
+                    </p>
+
+                    <button
+                        class="btn btn-outline"
+                        type="button"
+                        data-report="payments"
+                    >
+
+                        Fungua Ripoti
+
+                    </button>
+
+                </div>
+
+
+
+                <div class="report-card">
+
+                    <i class="fa-solid fa-wallet"></i>
+
+                    <h3>
+                        Ripoti za Matumizi
+                    </h3>
+
+                    <p>
+                        Angalia gharama na profit
+                        za projects.
+                    </p>
+
+                    <button
+                        class="btn btn-outline"
+                        type="button"
+                        data-report="expenses"
+                    >
+
+                        Fungua Ripoti
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- REPORT SUMMARY -->
+
+            <div
+                class="content-card"
+                style="margin-top:20px;"
+            >
+
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Business Summary
+                        </h3>
+
+                        <span>
+                            Muhtasari wa biashara
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    style="
+                        padding:20px;
+                        display:grid;
+                        grid-template-columns:
+                        repeat(4,1fr);
+                        gap:15px;
+                    "
+                >
+
+
+                    <div>
+
+                        <span
+                            style="
+                                color:var(--muted);
+                                font-size:11px;
+                            "
+                        >
+                            Sales
+                        </span>
+
+                        <h3
+                            id="reportSales"
+                            style="margin-top:5px;"
+                        >
+                            TZS 0
+                        </h3>
+
+                    </div>
+
+
+                    <div>
+
+                        <span
+                            style="
+                                color:var(--muted);
+                                font-size:11px;
+                            "
+                        >
+                            Payments
+                        </span>
+
+                        <h3
+                            id="reportPayments"
+                            style="margin-top:5px;"
+                        >
+                            TZS 0
+                        </h3>
+
+                    </div>
+
+
+                    <div>
+
+                        <span
+                            style="
+                                color:var(--muted);
+                                font-size:11px;
+                            "
+                        >
+                            Expenses
+                        </span>
+
+                        <h3
+                            id="reportExpenses"
+                            style="margin-top:5px;"
+                        >
+                            TZS 0
+                        </h3>
+
+                    </div>
+
+
+                    <div>
+
+                        <span
+                            style="
+                                color:var(--muted);
+                                font-size:11px;
+                            "
+                        >
+                            Profit
+                        </span>
+
+                        <h3
+                            id="reportProfit"
+                            style="margin-top:5px;"
+                        >
+                            TZS 0
+                        </h3>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+    </div>
+
+</main>
+
+
+
+<!-- ==================================================
+     TOAST / NOTIFICATION
+================================================== -->
+
+<div
+    id="toast"
+    style="
+        position:fixed;
+        right:25px;
+        bottom:25px;
+        z-index:5000;
+        display:none;
+        min-width:280px;
+        max-width:400px;
+        padding:14px 18px;
+        border-radius:10px;
+        background:#1a2332;
+        color:white;
+        box-shadow:0 10px 30px rgba(0,0,0,.15);
+        font-size:12px;
+    "
+>
+
+    <div
+        style="
+            display:flex;
+            align-items:center;
+            gap:10px;
+        "
+    >
+
+        <i
+            id="toastIcon"
+            class="fa-solid fa-circle-check"
+        ></i>
+
+        <span id="toastMessage">
+            Success
+        </span>
+
+    </div>
+
+</div>
+
+
+
+<!-- ==================================================
+     JAVASCRIPT
+================================================== -->
+
+<script src="script.js"></script>
+
+
+</body>
+</html>
