@@ -1,40 +1,140 @@
 /****************************************************
- * KASHOMBA ELECTRICAL
- * FRONTEND APPLICATION
- *
- * CONNECTION:
- * Google Apps Script -> Code.gs
- * Database -> Google Sheets
+ * KASHOMBA ELECTRICAL MANAGEMENT SYSTEM
+ * FRONTEND
  ****************************************************/
 
 
 /* ==================================================
-   GLOBAL STATE
+   API CONFIG
 ================================================== */
 
-const APP = {
-
-    customers: [],
-
-    items: [],
-
-    invoices: [],
-
-    payments: [],
-
-    staff: [],
-
-    expenses: [],
-
-    dashboard: null,
-
-    loading: false
-
-};
+const API_URL =
+    "https://script.google.com/macros/s/AKfycbxnQPhZInsoWH3SZ655ko4PCCe8eTu9JbFy3bQYCkTZ38Nt3l3MuWMoPIM1eeS4jKZK/exec";
 
 
 /* ==================================================
-   INITIALIZE
+   GLOBAL DATA
+================================================== */
+
+let customersData = [];
+let itemsData = [];
+let invoicesData = [];
+let paymentsData = [];
+let staffData = [];
+let expensesData = [];
+
+
+/* ==================================================
+   API
+================================================== */
+
+async function api(
+    action,
+    data = {}
+) {
+
+    try {
+
+        console.log(
+            "API REQUEST:",
+            action,
+            data
+        );
+
+
+        const response =
+            await fetch(
+                API_URL,
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                action,
+
+                            data:
+                                data
+
+                        })
+
+                }
+            );
+
+
+        const text =
+            await response.text();
+
+
+        console.log(
+            "API RAW RESPONSE:",
+            text
+        );
+
+
+        let result;
+
+
+        try {
+
+            result =
+                JSON.parse(text);
+
+        } catch (error) {
+
+            console.error(
+                "JSON PARSE ERROR:",
+                text
+            );
+
+            throw new Error(
+                "Backend imerudisha response isiyo sahihi."
+            );
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+                result.message ||
+                "API request imeshindwa."
+            );
+
+        }
+
+
+        return result.data;
+
+
+    } catch (error) {
+
+        console.error(
+            "API ERROR:",
+            action,
+            error
+        );
+
+        throw error;
+
+    }
+
+}
+
+
+/* ==================================================
+   DOM READY
 ================================================== */
 
 document.addEventListener(
@@ -43,139 +143,1192 @@ document.addEventListener(
 );
 
 
-function initializeApp() {
-
-    setCurrentDate();
-
-    initializeNavigation();
-
-    initializeMobileSidebar();
-
-    initializeQuickActions();
-
-    initializeSearch();
-
-    initializeButtons();
-
-    loadDashboard();
-
-}
-
-
 /* ==================================================
-   GOOGLE APPS SCRIPT API
+   INITIALIZE
 ================================================== */
 
+async function initializeApp() {
 
-/**
- * Call backend function safely.
- *
- * Mfano:
- *
- * api("getCustomers")
- *
- * api("addCustomer", {
- *     jina: "John",
- *     simu: "0712345678"
- * })
- */
-function api(functionName, data = {}) {
-
-    return new Promise(
-        (resolve, reject) => {
-
-            if (
-                typeof google === "undefined" ||
-                !google.script ||
-                !google.script.run
-            ) {
-
-                reject(
-                    new Error(
-                        "Google Apps Script environment haipatikani."
-                    )
-                );
-
-                return;
-
-            }
-
-
-            const runner =
-                google.script.run
-
-                    .withSuccessHandler(
-                        resolve
-                    )
-
-                    .withFailureHandler(
-                        error => {
-
-                            reject(
-                                new Error(
-                                    error &&
-                                    error.message
-                                        ? error.message
-                                        : String(error)
-                                )
-                            );
-
-                        }
-                    );
-
-
-            if (
-                data &&
-                Object.keys(data).length > 0
-            ) {
-
-                runner[functionName](
-                    data
-                );
-
-            }
-
-            else {
-
-                runner[functionName]();
-
-            }
-
-        }
+    console.log(
+        "Kashomba Electrical starting..."
     );
 
+
+    updateCurrentDate();
+
+
+    setupNavigation();
+
+
+    setupForms();
+
+
+    setupSearch();
+
+
+    await checkBackend();
+
+
+    await loadAllData();
+
 }
 
 
 /* ==================================================
-   DATE
+   BACKEND TEST
 ================================================== */
 
-function setCurrentDate() {
+async function checkBackend() {
 
-    const element =
+    try {
+
+        const result =
+            await api(
+                "testConnection"
+            );
+
+
+        console.log(
+            "BACKEND CONNECTED:",
+            result
+        );
+
+
+        showToast(
+            "System imeunganishwa vizuri.",
+            "success"
+        );
+
+
+        return true;
+
+
+    } catch (error) {
+
+        console.error(
+            "BACKEND CONNECTION ERROR:",
+            error
+        );
+
+
+        showToast(
+            "Backend haijaunganishwa: " +
+            error.message,
+            "error"
+        );
+
+
+        return false;
+
+    }
+
+}
+
+
+/* ==================================================
+   LOAD ALL DATA
+================================================== */
+
+async function loadAllData() {
+
+    try {
+
+        await Promise.all([
+
+            loadCustomers(),
+
+            loadItems(),
+
+            loadInvoices(),
+
+            loadPayments(),
+
+            loadStaff(),
+
+            loadExpenses(),
+
+            loadDashboard(),
+
+            loadReports()
+
+        ]);
+
+
+        console.log(
+            "All data loaded."
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "LOAD DATA ERROR:",
+            error
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   DASHBOARD
+================================================== */
+
+async function loadDashboard() {
+
+    try {
+
+        const stats =
+            await api(
+                "getDashboardStats"
+            );
+
+
         document.getElementById(
-            "currentDate"
+            "dashboardCustomers"
+        ).textContent =
+            stats.customers || 0;
+
+
+        document.getElementById(
+            "dashboardInvoices"
+        ).textContent =
+            stats.invoices || 0;
+
+
+        document.getElementById(
+            "dashboardPayments"
+        ).textContent =
+            formatMoney(
+                stats.payments
+            );
+
+
+        document.getElementById(
+            "dashboardProfit"
+        ).textContent =
+            formatMoney(
+                stats.profit
+            );
+
+
+        await renderDashboardInvoices();
+
+
+    } catch (error) {
+
+        console.error(
+            "Dashboard error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   DASHBOARD RECENT INVOICES
+================================================== */
+
+async function renderDashboardInvoices() {
+
+    const tbody =
+        document.getElementById(
+            "dashboardInvoicesTable"
         );
 
 
-    if (!element) return;
+    if (!tbody) {
+        return;
+    }
 
 
-    const now =
-        new Date();
+    const recent =
+        invoicesData
+            .slice()
+            .reverse()
+            .slice(
+                0,
+                5
+            );
 
 
-    element.textContent =
-        now.toLocaleDateString(
-            "sw-TZ",
-            {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric"
+    if (
+        recent.length === 0
+    ) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="5"
+                    class="empty-state"
+                >
+
+                    Hakuna invoice kwa sasa.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    tbody.innerHTML =
+        recent.map(
+            invoice => {
+
+                const status =
+                    invoice["Hali"] ||
+                    "UNPAID";
+
+
+                return `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHTML(
+                                invoice["Invoice No"]
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                invoice["Mteja"]
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatDate(
+                                invoice["Tarehe"]
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatMoney(
+                                invoice["Total Charges"]
+                            )}
+                        </td>
+
+                        <td>
+                            <span class="status-badge">
+                                ${escapeHTML(
+                                    status
+                                )}
+                            </span>
+                        </td>
+
+                    </tr>
+
+                `;
+
             }
+        )
+        .join("");
+
+}
+
+
+/* ==================================================
+   CUSTOMERS
+================================================== */
+
+async function loadCustomers() {
+
+    try {
+
+        customersData =
+            await api(
+                "getCustomers"
+            );
+
+
+        renderCustomers(
+            customersData
         );
+
+
+        populateCustomerSelect();
+
+
+    } catch (error) {
+
+        console.error(
+            "Customers error:",
+            error
+        );
+
+    }
+
+}
+
+
+function renderCustomers(
+    customers
+) {
+
+    const tbody =
+        document.getElementById(
+            "customersTableBody"
+        );
+
+
+    if (!tbody) {
+        return;
+    }
+
+
+    if (
+        !customers ||
+        customers.length === 0
+    ) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="7"
+                    class="empty-state"
+                >
+
+                    Hakuna wateja kwa sasa.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    tbody.innerHTML =
+        customers.map(
+            customer => `
+
+                <tr>
+
+                    <td>
+                        ${escapeHTML(
+                            customer["Customer ID"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            customer["Jina"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            customer["Simu"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            customer["Anwani"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            customer["P.O. Box"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            customer["Email"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatDate(
+                            customer["Tarehe"]
+                        )}
+                    </td>
+
+                </tr>
+
+            `
+        )
+        .join("");
+
+}
+
+
+/* ==================================================
+   ITEMS
+================================================== */
+
+async function loadItems() {
+
+    try {
+
+        itemsData =
+            await api(
+                "getItems"
+            );
+
+
+        renderItems(
+            itemsData
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Items error:",
+            error
+        );
+
+    }
+
+}
+
+
+function renderItems(
+    items
+) {
+
+    const tbody =
+        document.getElementById(
+            "itemsTableBody"
+        );
+
+
+    if (!tbody) {
+        return;
+    }
+
+
+    if (
+        !items ||
+        items.length === 0
+    ) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="4"
+                    class="empty-state"
+                >
+
+                    Hakuna vifaa kwa sasa.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    tbody.innerHTML =
+        items.map(
+            item => `
+
+                <tr>
+
+                    <td>
+                        ${escapeHTML(
+                            item["Item ID"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            item["Jina"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${Number(
+                            item["Kiasi"] || 0
+                        ).toLocaleString()}
+                    </td>
+
+                    <td>
+                        ${formatMoney(
+                            item["Bei"]
+                        )}
+                    </td>
+
+                </tr>
+
+            `
+        )
+        .join("");
+
+}
+
+
+/* ==================================================
+   INVOICES
+================================================== */
+
+async function loadInvoices() {
+
+    try {
+
+        invoicesData =
+            await api(
+                "getInvoices"
+            );
+
+
+        renderInvoices(
+            invoicesData
+        );
+
+
+        populateInvoiceSelects();
+
+
+        renderInvoiceItems();
+
+
+    } catch (error) {
+
+        console.error(
+            "Invoices error:",
+            error
+        );
+
+    }
+
+}
+
+
+function renderInvoices(
+    invoices
+) {
+
+    const tbody =
+        document.getElementById(
+            "invoicesTableBody"
+        );
+
+
+    if (!tbody) {
+        return;
+    }
+
+
+    if (
+        !invoices ||
+        invoices.length === 0
+    ) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="8"
+                    class="empty-state"
+                >
+
+                    Hakuna invoice kwa sasa.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    tbody.innerHTML =
+        invoices.map(
+            invoice => `
+
+                <tr>
+
+                    <td>
+                        ${escapeHTML(
+                            invoice["Invoice No"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            invoice["Mteja"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatDate(
+                            invoice["Tarehe"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatMoney(
+                            invoice["Subtotal"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatMoney(
+                            invoice["Labour"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatMoney(
+                            invoice["Discount"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatMoney(
+                            invoice["Total Charges"]
+                        )}
+                    </td>
+
+                    <td>
+                        <span class="status-badge">
+                            ${escapeHTML(
+                                invoice["Hali"]
+                            )}
+                        </span>
+                    </td>
+
+                </tr>
+
+            `
+        )
+        .join("");
+
+}
+
+
+/* ==================================================
+   PAYMENTS
+================================================== */
+
+async function loadPayments() {
+
+    try {
+
+        paymentsData =
+            await api(
+                "getPayments"
+            );
+
+
+        renderPayments(
+            paymentsData
+        );
+
+
+        populateInvoiceSelects();
+
+
+    } catch (error) {
+
+        console.error(
+            "Payments error:",
+            error
+        );
+
+    }
+
+}
+
+
+function renderPayments(
+    payments
+) {
+
+    const tbody =
+        document.getElementById(
+            "paymentsTableBody"
+        );
+
+
+    if (!tbody) {
+        return;
+    }
+
+
+    if (
+        !payments ||
+        payments.length === 0
+    ) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="5"
+                    class="empty-state"
+                >
+
+                    Hakuna malipo kwa sasa.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    tbody.innerHTML =
+        payments.map(
+            payment => `
+
+                <tr>
+
+                    <td>
+                        ${escapeHTML(
+                            payment["Payment ID"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            payment["Invoice No"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatMoney(
+                            payment["Kiasi"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatDate(
+                            payment["Tarehe"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            payment["Njia"]
+                        )}
+                    </td>
+
+                </tr>
+
+            `
+        )
+        .join("");
+
+}
+
+
+/* ==================================================
+   STAFF
+================================================== */
+
+async function loadStaff() {
+
+    try {
+
+        staffData =
+            await api(
+                "getStaff"
+            );
+
+
+        renderStaff(
+            staffData
+        );
+
+
+        populateStaffSelect();
+
+
+    } catch (error) {
+
+        console.error(
+            "Staff error:",
+            error
+        );
+
+    }
+
+}
+
+
+function renderStaff(
+    staff
+) {
+
+    const tbody =
+        document.getElementById(
+            "staffTableBody"
+        );
+
+
+    if (!tbody) {
+        return;
+    }
+
+
+    if (
+        !staff ||
+        staff.length === 0
+    ) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="4"
+                    class="empty-state"
+                >
+
+                    Hakuna wafanyakazi kwa sasa.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    tbody.innerHTML =
+        staff.map(
+            member => `
+
+                <tr>
+
+                    <td>
+                        ${escapeHTML(
+                            member["Staff ID"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            member["Jina"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            member["Simu"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatMoney(
+                            member["Kiwango Kwa Siku"]
+                        )}
+                    </td>
+
+                </tr>
+
+            `
+        )
+        .join("");
+
+}
+
+
+/* ==================================================
+   EXPENSES
+================================================== */
+
+async function loadExpenses() {
+
+    try {
+
+        expensesData =
+            await api(
+                "getExpenses"
+            );
+
+
+        renderExpenses(
+            expensesData
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Expenses error:",
+            error
+        );
+
+    }
+
+}
+
+
+function renderExpenses(
+    expenses
+) {
+
+    const tbody =
+        document.getElementById(
+            "expensesTableBody"
+        );
+
+
+    if (!tbody) {
+        return;
+    }
+
+
+    if (
+        !expenses ||
+        expenses.length === 0
+    ) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="8"
+                    class="empty-state"
+                >
+
+                    Hakuna matumizi kwa sasa.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    tbody.innerHTML =
+        expenses.map(
+            expense => `
+
+                <tr>
+
+                    <td>
+                        ${escapeHTML(
+                            expense["Expense ID"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            expense["Project"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            expense["Aina"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            expense["Fundi"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatMoney(
+                            expense["Labour Charge"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatMoney(
+                            expense["Gharama Zote-auto"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatMoney(
+                            expense["Faida"]
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatDate(
+                            expense["Tarehe"]
+                        )}
+                    </td>
+
+                </tr>
+
+            `
+        )
+        .join("");
+
+}
+
+
+/* ==================================================
+   REPORTS
+================================================== */
+
+async function loadReports() {
+
+    try {
+
+        const reports =
+            await api(
+                "getReports"
+            );
+
+
+        if (
+            !reports
+        ) {
+            return;
+        }
+
+
+        const dashboard =
+            reports.dashboard ||
+            {};
+
+
+        const sales =
+            invoicesData.reduce(
+                (
+                    total,
+                    invoice
+                ) =>
+                    total +
+                    Number(
+                        invoice["Total Charges"]
+                    ) || 0,
+                0
+            );
+
+
+        const expenses =
+            reports.expenses ||
+            [];
+
+
+        const expenseTotal =
+            expenses.reduce(
+                (
+                    total,
+                    expense
+                ) =>
+                    total +
+                    Number(
+                        expense["Gharama Zote-auto"]
+                    ) || 0,
+                0
+            );
+
+
+        const reportSales =
+            document.getElementById(
+                "reportSales"
+            );
+
+
+        const reportPayments =
+            document.getElementById(
+                "reportPayments"
+            );
+
+
+        const reportExpenses =
+            document.getElementById(
+                "reportExpenses"
+            );
+
+
+        const reportProfit =
+            document.getElementById(
+                "reportProfit"
+            );
+
+
+        if (reportSales) {
+
+            reportSales.textContent =
+                formatMoney(
+                    sales
+                );
+
+        }
+
+
+        if (reportPayments) {
+
+            reportPayments.textContent =
+                formatMoney(
+                    dashboard.payments
+                );
+
+        }
+
+
+        if (reportExpenses) {
+
+            reportExpenses.textContent =
+                formatMoney(
+                    expenseTotal
+                );
+
+        }
+
+
+        if (reportProfit) {
+
+            reportProfit.textContent =
+                formatMoney(
+                    dashboard.profit
+                );
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Reports error:",
+            error
+        );
+
+    }
 
 }
 
@@ -184,7 +1337,7 @@ function setCurrentDate() {
    NAVIGATION
 ================================================== */
 
-function initializeNavigation() {
+function setupNavigation() {
 
     const links =
         document.querySelectorAll(
@@ -206,10 +1359,9 @@ function initializeNavigation() {
                         link.dataset.page;
 
 
-                    if (!page) return;
-
-
-                    showPage(page);
+                    navigateToPage(
+                        page
+                    );
 
                 }
             );
@@ -217,154 +1369,163 @@ function initializeNavigation() {
         }
     );
 
+
+    document
+        .querySelectorAll(
+            "[data-page]"
+        )
+        .forEach(
+            button => {
+
+                if (
+                    button.classList.contains(
+                        "nav-link"
+                    )
+                ) {
+                    return;
+                }
+
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        navigateToPage(
+                            button.dataset.page
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+    const menuToggle =
+        document.getElementById(
+            "menuToggle"
+        );
+
+
+    const sidebarClose =
+        document.getElementById(
+            "sidebarClose"
+        );
+
+
+    const overlay =
+        document.getElementById(
+            "sidebarOverlay"
+        );
+
+
+    if (menuToggle) {
+
+        menuToggle.addEventListener(
+            "click",
+            openSidebar
+        );
+
+    }
+
+
+    if (sidebarClose) {
+
+        sidebarClose.addEventListener(
+            "click",
+            closeSidebar
+        );
+
+    }
+
+
+    if (overlay) {
+
+        overlay.addEventListener(
+            "click",
+            closeSidebar
+        );
+
+    }
+
 }
 
 
-function showPage(pageName) {
+function navigateToPage(
+    page
+) {
 
-    const pages =
-        document.querySelectorAll(
+    if (!page) {
+        return;
+    }
+
+
+    document
+        .querySelectorAll(
             ".page"
+        )
+        .forEach(
+            section => {
+
+                section.classList.remove(
+                    "active-page"
+                );
+
+            }
         );
 
 
-    const links =
-        document.querySelectorAll(
-            ".nav-link"
-        );
-
-
-    pages.forEach(
-        page => {
-
-            page.classList.remove(
-                "active-page"
-            );
-
-        }
-    );
-
-
-    links.forEach(
-        link => {
-
-            link.classList.remove(
-                "active"
-            );
-
-        }
-    );
-
-
-    const targetPage =
+    const target =
         document.getElementById(
-            `page-${pageName}`
+            "page-" + page
         );
 
 
-    const targetLink =
-        document.querySelector(
-            `.nav-link[data-page="${pageName}"]`
-        );
+    if (target) {
 
-
-    if (targetPage) {
-
-        targetPage.classList.add(
+        target.classList.add(
             "active-page"
         );
 
     }
 
 
-    if (targetLink) {
+    document
+        .querySelectorAll(
+            ".nav-link"
+        )
+        .forEach(
+            link => {
 
-        targetLink.classList.add(
-            "active"
+                link.classList.toggle(
+                    "active",
+                    link.dataset.page === page
+                );
+
+            }
         );
 
-    }
 
-
-    updatePageHeader(
-        pageName
+    updatePageHeading(
+        page
     );
 
 
-    closeMobileSidebar();
+    closeSidebar();
 
 
-    /*
-     * Load data when user opens page.
-     */
+    if (page === "dashboard") {
 
-    switch (pageName) {
-
-        case "dashboard":
-
-            loadDashboard();
-
-            break;
-
-
-        case "customers":
-
-            loadCustomers();
-
-            break;
-
-
-        case "items":
-
-            loadItems();
-
-            break;
-
-
-        case "invoices":
-
-            loadInvoices();
-
-            break;
-
-
-        case "payments":
-
-            loadPayments();
-
-            break;
-
-
-        case "staff":
-
-            loadStaff();
-
-            break;
-
-
-        case "expenses":
-
-            loadExpenses();
-
-            break;
-
-
-        case "reports":
-
-            loadReports();
-
-            break;
+        loadDashboard();
 
     }
 
 }
 
 
-/* ==================================================
-   PAGE HEADERS
-================================================== */
-
-function updatePageHeader(pageName) {
+function updatePageHeading(
+    page
+) {
 
     const title =
         document.getElementById(
@@ -378,101 +1539,60 @@ function updatePageHeader(pageName) {
         );
 
 
-    const pageInfo = {
+    const pages = {
 
-        dashboard: {
+        dashboard: [
+            "Dashboard",
+            "Muhtasari wa shughuli za ofisi"
+        ],
 
-            title: "Dashboard",
+        customers: [
+            "Wateja",
+            "Simamia taarifa za wateja"
+        ],
 
-            subtitle:
-                "Muhtasari wa shughuli za ofisi"
+        items: [
+            "Vifaa",
+            "Catalog ya vifaa na bei"
+        ],
 
-        },
+        invoices: [
+            "Invoice",
+            "Tengeneza na simamia invoices"
+        ],
 
+        payments: [
+            "Malipo",
+            "Rekodi na fuatilia malipo"
+        ],
 
-        customers: {
+        staff: [
+            "Wafanyakazi",
+            "Simamia mafundi na viwango vyao"
+        ],
 
-            title: "Wateja",
+        expenses: [
+            "Matumizi",
+            "Simamia gharama za projects"
+        ],
 
-            subtitle:
-                "Ongeza na simamia taarifa za wateja"
-
-        },
-
-
-        invoices: {
-
-            title: "Invoice",
-
-            subtitle:
-                "Tengeneza na simamia invoices"
-
-        },
-
-
-        items: {
-
-            title: "Vifaa",
-
-            subtitle:
-                "Catalog ya vifaa na bei"
-
-        },
-
-
-        payments: {
-
-            title: "Malipo",
-
-            subtitle:
-                "Rekodi na fuatilia malipo"
-
-        },
-
-
-        staff: {
-
-            title: "Wafanyakazi",
-
-            subtitle:
-                "Simamia mafundi na viwango vyao"
-
-        },
-
-
-        expenses: {
-
-            title: "Matumizi",
-
-            subtitle:
-                "Simamia gharama za projects"
-
-        },
-
-
-        reports: {
-
-            title: "Ripoti",
-
-            subtitle:
-                "Ripoti za biashara na fedha"
-
-        }
+        reports: [
+            "Ripoti",
+            "Ripoti za biashara na fedha"
+        ]
 
     };
 
 
     const info =
-        pageInfo[pageName];
-
-
-    if (!info) return;
+        pages[page] ||
+        pages.dashboard;
 
 
     if (title) {
 
         title.textContent =
-            info.title;
+            info[0];
 
     }
 
@@ -480,7 +1600,7 @@ function updatePageHeader(pageName) {
     if (subtitle) {
 
         subtitle.textContent =
-            info.subtitle;
+            info[1];
 
     }
 
@@ -488,16 +1608,10 @@ function updatePageHeader(pageName) {
 
 
 /* ==================================================
-   MOBILE SIDEBAR
+   SIDEBAR
 ================================================== */
 
-function initializeMobileSidebar() {
-
-    const menuToggle =
-        document.getElementById(
-            "menuToggle"
-        );
-
+function openSidebar() {
 
     const sidebar =
         document.getElementById(
@@ -511,31 +1625,10 @@ function initializeMobileSidebar() {
         );
 
 
-    const closeButton =
-        document.getElementById(
-            "sidebarClose"
-        );
+    if (sidebar) {
 
-
-    if (
-        menuToggle &&
-        sidebar &&
-        overlay
-    ) {
-
-        menuToggle.addEventListener(
-            "click",
-            () => {
-
-                sidebar.classList.add(
-                    "open"
-                );
-
-                overlay.classList.add(
-                    "active"
-                );
-
-            }
+        sidebar.classList.add(
+            "open"
         );
 
     }
@@ -543,19 +1636,8 @@ function initializeMobileSidebar() {
 
     if (overlay) {
 
-        overlay.addEventListener(
-            "click",
-            closeMobileSidebar
-        );
-
-    }
-
-
-    if (closeButton) {
-
-        closeButton.addEventListener(
-            "click",
-            closeMobileSidebar
+        overlay.classList.add(
+            "active"
         );
 
     }
@@ -563,7 +1645,7 @@ function initializeMobileSidebar() {
 }
 
 
-function closeMobileSidebar() {
+function closeSidebar() {
 
     const sidebar =
         document.getElementById(
@@ -598,2013 +1680,1591 @@ function closeMobileSidebar() {
 
 
 /* ==================================================
-   QUICK ACTIONS
+   FORMS
 ================================================== */
 
-function initializeQuickActions() {
+function setupForms() {
 
-    const buttons =
-        document.querySelectorAll(
-            "[data-page]"
+    setupCustomerForm();
+
+    setupItemForm();
+
+    setupInvoiceForm();
+
+    setupPaymentForm();
+
+    setupStaffForm();
+
+    setupExpenseForm();
+
+}
+
+
+/* ==================================================
+   CUSTOMER FORM
+================================================== */
+
+function setupCustomerForm() {
+
+    const addButton =
+        document.getElementById(
+            "addCustomerButton"
         );
 
 
-    buttons.forEach(
-        button => {
+    const card =
+        document.getElementById(
+            "customerFormCard"
+        );
 
-            if (
-                button.classList.contains(
-                    "nav-link"
-                )
-            ) {
 
-                return;
+    const cancel =
+        document.getElementById(
+            "cancelCustomerButton"
+        );
+
+
+    const form =
+        document.getElementById(
+            "customerForm"
+        );
+
+
+    if (addButton) {
+
+        addButton.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "block";
 
             }
+        );
+
+    }
 
 
-            button.addEventListener(
-                "click",
-                () => {
+    if (cancel) {
 
-                    const page =
-                        button.dataset.page;
+        cancel.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "none";
+
+                form.reset();
+
+            }
+        );
+
+    }
 
 
-                    if (page) {
+    if (form) {
 
-                        showPage(page);
+        form.addEventListener(
+            "submit",
+            async event => {
+
+                event.preventDefault();
+
+
+                const data = {
+
+                    jina:
+                        document.getElementById(
+                            "customerName"
+                        ).value.trim(),
+
+                    simu:
+                        document.getElementById(
+                            "customerPhone"
+                        ).value.trim(),
+
+                    anwani:
+                        document.getElementById(
+                            "customerAddress"
+                        ).value.trim(),
+
+                    pobox:
+                        document.getElementById(
+                            "customerPobox"
+                        ).value.trim(),
+
+                    email:
+                        document.getElementById(
+                            "customerEmail"
+                        ).value.trim()
+
+                };
+
+
+                try {
+
+                    await api(
+                        "addCustomer",
+                        data
+                    );
+
+
+                    showToast(
+                        "Mteja ameongezwa.",
+                        "success"
+                    );
+
+
+                    form.reset();
+
+
+                    card.style.display =
+                        "none";
+
+
+                    await loadCustomers();
+
+                    await loadDashboard();
+
+
+                } catch (error) {
+
+                    showToast(
+                        error.message,
+                        "error"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   ITEM FORM
+================================================== */
+
+function setupItemForm() {
+
+    const addButton =
+        document.getElementById(
+            "addItemButton"
+        );
+
+
+    const card =
+        document.getElementById(
+            "itemFormCard"
+        );
+
+
+    const cancel =
+        document.getElementById(
+            "cancelItemButton"
+        );
+
+
+    const form =
+        document.getElementById(
+            "itemForm"
+        );
+
+
+    if (addButton) {
+
+        addButton.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "block";
+
+            }
+        );
+
+    }
+
+
+    if (cancel) {
+
+        cancel.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "none";
+
+                form.reset();
+
+            }
+        );
+
+    }
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            async event => {
+
+                event.preventDefault();
+
+
+                const data = {
+
+                    jina:
+                        document.getElementById(
+                            "itemName"
+                        ).value.trim(),
+
+                    kiasi:
+                        document.getElementById(
+                            "itemQuantity"
+                        ).value,
+
+                    bei:
+                        document.getElementById(
+                            "itemPrice"
+                        ).value
+
+                };
+
+
+                try {
+
+                    await api(
+                        "addItem",
+                        data
+                    );
+
+
+                    showToast(
+                        "Kifaa kimeongezwa.",
+                        "success"
+                    );
+
+
+                    form.reset();
+
+
+                    card.style.display =
+                        "none";
+
+
+                    await loadItems();
+
+
+                } catch (error) {
+
+                    showToast(
+                        error.message,
+                        "error"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   INVOICE FORM
+================================================== */
+
+function setupInvoiceForm() {
+
+    const addButton =
+        document.getElementById(
+            "createInvoiceButton"
+        );
+
+
+    const card =
+        document.getElementById(
+            "invoiceFormCard"
+        );
+
+
+    const cancel =
+        document.getElementById(
+            "cancelInvoiceButton"
+        );
+
+
+    const form =
+        document.getElementById(
+            "invoiceForm"
+        );
+
+
+    const addItemButton =
+        document.getElementById(
+            "addInvoiceItemButton"
+        );
+
+
+    if (addButton) {
+
+        addButton.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "block";
+
+
+                renderInvoiceItems();
+
+            }
+        );
+
+    }
+
+
+    if (cancel) {
+
+        cancel.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "none";
+
+                form.reset();
+
+                document.getElementById(
+                    "invoiceItemsContainer"
+                ).innerHTML = "";
+
+            }
+        );
+
+    }
+
+
+    if (addItemButton) {
+
+        addItemButton.addEventListener(
+            "click",
+            () => {
+
+                addInvoiceItemRow();
+
+            }
+        );
+
+    }
+
+
+    const labour =
+        document.getElementById(
+            "invoiceLabour"
+        );
+
+
+    const discount =
+        document.getElementById(
+            "invoiceDiscount"
+        );
+
+
+    if (labour) {
+
+        labour.addEventListener(
+            "input",
+            calculateInvoiceTotal
+        );
+
+    }
+
+
+    if (discount) {
+
+        discount.addEventListener(
+            "input",
+            calculateInvoiceTotal
+        );
+
+    }
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            async event => {
+
+                event.preventDefault();
+
+
+                const customer =
+                    document.getElementById(
+                        "invoiceCustomer"
+                    ).value;
+
+
+                const date =
+                    document.getElementById(
+                        "invoiceDate"
+                    ).value;
+
+
+                const labourValue =
+                    document.getElementById(
+                        "invoiceLabour"
+                    ).value;
+
+
+                const discountValue =
+                    document.getElementById(
+                        "invoiceDiscount"
+                    ).value;
+
+
+                const rows =
+                    document.querySelectorAll(
+                        ".invoice-item-row"
+                    );
+
+
+                const vifaa = [];
+
+
+                rows.forEach(
+                    row => {
+
+                        const select =
+                            row.querySelector(
+                                ".invoice-item-select"
+                            );
+
+
+                        const qty =
+                            row.querySelector(
+                                ".invoice-item-qty"
+                            );
+
+
+                        if (
+                            select &&
+                            select.value
+                        ) {
+
+                            const item =
+                                itemsData.find(
+                                    i =>
+                                        String(
+                                            i["Item ID"]
+                                        ) ===
+                                        String(
+                                            select.value
+                                        )
+                                );
+
+
+                            if (item) {
+
+                                vifaa.push({
+
+                                    jina:
+                                        item["Jina"],
+
+                                    qty:
+                                        Number(
+                                            qty.value
+                                        ) || 1,
+
+                                    price:
+                                        Number(
+                                            item["Bei"]
+                                        ) || 0
+
+                                });
+
+                            }
+
+                        }
+
+                    }
+                );
+
+
+                if (
+                    !customer
+                ) {
+
+                    showToast(
+                        "Chagua mteja.",
+                        "error"
+                    );
+
+                    return;
+
+                }
+
+
+                if (
+                    vifaa.length === 0
+                ) {
+
+                    showToast(
+                        "Ongeza angalau kifaa kimoja.",
+                        "error"
+                    );
+
+                    return;
+
+                }
+
+
+                try {
+
+                    await api(
+
+                        "createInvoice",
+
+                        {
+
+                            mteja:
+                                customer,
+
+                            tarehe:
+                                date,
+
+                            vifaa:
+                                vifaa,
+
+                            labour:
+                                labourValue,
+
+                            discount:
+                                discountValue
+
+                        }
+
+                    );
+
+
+                    showToast(
+                        "Invoice imetengenezwa.",
+                        "success"
+                    );
+
+
+                    form.reset();
+
+
+                    document.getElementById(
+                        "invoiceItemsContainer"
+                    ).innerHTML = "";
+
+
+                    card.style.display =
+                        "none";
+
+
+                    await loadInvoices();
+
+                    await loadDashboard();
+
+
+                } catch (error) {
+
+                    showToast(
+                        error.message,
+                        "error"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   INVOICE ITEM ROWS
+================================================== */
+
+function renderInvoiceItems() {
+
+    const container =
+        document.getElementById(
+            "invoiceItemsContainer"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    if (
+        container.children.length === 0
+    ) {
+
+        addInvoiceItemRow();
+
+    }
+
+}
+
+
+function addInvoiceItemRow() {
+
+    const container =
+        document.getElementById(
+            "invoiceItemsContainer"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    const row =
+        document.createElement(
+            "div"
+        );
+
+
+    row.className =
+        "invoice-item-row";
+
+
+    row.style.cssText = `
+
+        display:grid;
+        grid-template-columns:
+        2fr 1fr auto;
+        gap:10px;
+        margin-bottom:10px;
+        align-items:end;
+
+    `;
+
+
+    row.innerHTML = `
+
+        <div>
+
+            <label>
+                Kifaa
+            </label>
+
+            <select
+                class="invoice-item-select"
+            >
+
+                <option value="">
+                    Chagua Kifaa
+                </option>
+
+                ${itemsData.map(
+                    item => `
+
+                        <option
+                            value="${escapeHTML(
+                                item["Item ID"]
+                            )}"
+                        >
+
+                            ${escapeHTML(
+                                item["Jina"]
+                            )}
+                            -
+                            ${formatMoney(
+                                item["Bei"]
+                            )}
+
+                        </option>
+
+                    `
+                ).join("")}
+
+            </select>
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Kiasi
+            </label>
+
+            <input
+                type="number"
+                class="invoice-item-qty"
+                min="1"
+                value="1"
+            >
+
+        </div>
+
+
+        <button
+            type="button"
+            class="btn btn-outline remove-invoice-item"
+        >
+
+            <i class="fa-solid fa-trash"></i>
+
+        </button>
+
+    `;
+
+
+    container.appendChild(
+        row
+    );
+
+
+    const select =
+        row.querySelector(
+            ".invoice-item-select"
+        );
+
+
+    const qty =
+        row.querySelector(
+            ".invoice-item-qty"
+        );
+
+
+    const remove =
+        row.querySelector(
+            ".remove-invoice-item"
+        );
+
+
+    select.addEventListener(
+        "change",
+        calculateInvoiceTotal
+    );
+
+
+    qty.addEventListener(
+        "input",
+        calculateInvoiceTotal
+    );
+
+
+    remove.addEventListener(
+        "click",
+        () => {
+
+            row.remove();
+
+            calculateInvoiceTotal();
+
+        }
+    );
+
+
+    calculateInvoiceTotal();
+
+}
+
+
+/* ==================================================
+   CALCULATE INVOICE
+================================================== */
+
+function calculateInvoiceTotal() {
+
+    let subtotal = 0;
+
+
+    document
+        .querySelectorAll(
+            ".invoice-item-row"
+        )
+        .forEach(
+            row => {
+
+                const select =
+                    row.querySelector(
+                        ".invoice-item-select"
+                    );
+
+
+                const qty =
+                    row.querySelector(
+                        ".invoice-item-qty"
+                    );
+
+
+                if (
+                    select &&
+                    select.value
+                ) {
+
+                    const item =
+                        itemsData.find(
+                            i =>
+                                String(
+                                    i["Item ID"]
+                                ) ===
+                                String(
+                                    select.value
+                                )
+                        );
+
+
+                    if (item) {
+
+                        subtotal +=
+                            (
+                                Number(
+                                    item["Bei"]
+                                ) || 0
+                            ) *
+                            (
+                                Number(
+                                    qty.value
+                                ) || 0
+                            );
 
                     }
 
                 }
-            );
 
-        }
-    );
-
-}
-
-
-/* ==================================================
-   BUTTONS
-================================================== */
-
-function initializeButtons() {
-
-
-    const addCustomerBtn =
-        document.getElementById(
-            "addCustomerBtn"
-        );
-
-
-    if (addCustomerBtn) {
-
-        addCustomerBtn.addEventListener(
-            "click",
-            addCustomer
-        );
-
-    }
-
-
-    const addItemBtn =
-        document.getElementById(
-            "addItemBtn"
-        );
-
-
-    if (addItemBtn) {
-
-        addItemBtn.addEventListener(
-            "click",
-            addItem
-        );
-
-    }
-
-
-    const addStaffBtn =
-        document.getElementById(
-            "addStaffBtn"
-        );
-
-
-    if (addStaffBtn) {
-
-        addStaffBtn.addEventListener(
-            "click",
-            addStaff
-        );
-
-    }
-
-
-    const addExpenseBtn =
-        document.getElementById(
-            "addExpenseBtn"
-        );
-
-
-    if (addExpenseBtn) {
-
-        addExpenseBtn.addEventListener(
-            "click",
-            addExpense
-        );
-
-    }
-
-
-    const createInvoiceBtn =
-        document.getElementById(
-            "createInvoiceBtn"
-        );
-
-
-    if (createInvoiceBtn) {
-
-        createInvoiceBtn.addEventListener(
-            "click",
-            createInvoice
-        );
-
-    }
-
-
-    const paymentBtn =
-        document.getElementById(
-            "recordPaymentBtn"
-        );
-
-
-    if (paymentBtn) {
-
-        paymentBtn.addEventListener(
-            "click",
-            recordPayment
-        );
-
-    }
-
-
-    const refreshReports =
-        document.getElementById(
-            "refreshReports"
-        );
-
-
-    if (refreshReports) {
-
-        refreshReports.addEventListener(
-            "click",
-            loadReports
-        );
-
-    }
-
-}
-
-
-/* ==================================================
-   DASHBOARD
-================================================== */
-
-async function loadDashboard() {
-
-    try {
-
-        const stats =
-            await api(
-                "getDashboardStats"
-            );
-
-
-        APP.dashboard =
-            stats;
-
-
-        updateDashboardStats(
-            stats
-        );
-
-
-        await loadRecentInvoices();
-
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Dashboard error:",
-            error
-        );
-
-        showError(
-            "Imeshindikana kupakia Dashboard."
-        );
-
-    }
-
-}
-
-
-function updateDashboardStats(
-    stats
-) {
-
-    setText(
-        "statCustomers",
-        formatNumber(
-            stats.customers
-        )
-    );
-
-
-    setText(
-        "statInvoices",
-        formatNumber(
-            stats.invoices
-        )
-    );
-
-
-    setText(
-        "statPayments",
-        formatMoney(
-            stats.payments
-        )
-    );
-
-
-    setText(
-        "statProfit",
-        formatMoney(
-            stats.profit
-        )
-    );
-
-}
-
-
-/* ==================================================
-   RECENT INVOICES
-================================================== */
-
-async function loadRecentInvoices() {
-
-    const tbody =
-        document.getElementById(
-            "recentInvoices"
-        );
-
-
-    if (!tbody) return;
-
-
-    try {
-
-        const invoices =
-            await api(
-                "getInvoices"
-            );
-
-
-        APP.invoices =
-            invoices || [];
-
-
-        const recent =
-            APP.invoices
-                .slice()
-                .reverse()
-                .slice(0, 5);
-
-
-        if (!recent.length) {
-
-            tbody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="4"
-                        class="empty-state"
-                    >
-                        Hakuna invoice bado.
-                    </td>
-
-                </tr>
-
-            `;
-
-            return;
-
-        }
-
-
-        tbody.innerHTML =
-            recent
-                .map(
-                    invoice =>
-                        `
-                        <tr>
-
-                            <td>
-                                ${escapeHtml(
-                                    getInvoiceNumber(
-                                        invoice
-                                    )
-                                )}
-                            </td>
-
-                            <td>
-                                ${escapeHtml(
-                                    getValue(
-                                        invoice,
-                                        [
-                                            "Mteja",
-                                            "mteja"
-                                        ]
-                                    )
-                                )}
-                            </td>
-
-                            <td>
-                                ${formatMoney(
-                                    getValue(
-                                        invoice,
-                                        [
-                                            "Total Charges",
-                                            "total charges"
-                                        ]
-                                    )
-                                )}
-                            </td>
-
-                            <td>
-                                ${statusBadge(
-                                    getValue(
-                                        invoice,
-                                        [
-                                            "Hali",
-                                            "Status"
-                                        ]
-                                    )
-                                )}
-                            </td>
-
-                        </tr>
-                        `
-                )
-                .join("");
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-        tbody.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="4"
-                    class="empty-state"
-                >
-                    Imeshindikana kupakia invoices.
-                </td>
-
-            </tr>
-
-        `;
-
-    }
-
-}
-
-
-/* ==================================================
-   CUSTOMERS
-================================================== */
-
-async function loadCustomers() {
-
-    const tbody =
-        document.getElementById(
-            "customersTable"
-        );
-
-
-    if (!tbody) return;
-
-
-    try {
-
-        const customers =
-            await api(
-                "getCustomers"
-            );
-
-
-        APP.customers =
-            customers || [];
-
-
-        renderCustomers(
-            APP.customers
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-        renderError(
-            tbody,
-            6
-        );
-
-    }
-
-}
-
-
-function renderCustomers(
-    customers
-) {
-
-    const tbody =
-        document.getElementById(
-            "customersTable"
-        );
-
-
-    if (!tbody) return;
-
-
-    if (!customers.length) {
-
-        tbody.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="6"
-                    class="empty-state"
-                >
-                    Hakuna wateja bado.
-                </td>
-
-            </tr>
-
-        `;
-
-        return;
-
-    }
-
-
-    tbody.innerHTML =
-        customers
-            .map(
-                customer =>
-                    `
-
-                    <tr>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    customer,
-                                    [
-                                        "Customer ID",
-                                        "ID",
-                                        "id"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            <strong>
-                                ${escapeHtml(
-                                    getValue(
-                                        customer,
-                                        [
-                                            "Jina",
-                                            "jina"
-                                        ]
-                                    )
-                                )}
-                            </strong>
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    customer,
-                                    [
-                                        "Simu",
-                                        "simu"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    customer,
-                                    [
-                                        "Anwani",
-                                        "anwani"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    customer,
-                                    [
-                                        "Email",
-                                        "email"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatDate(
-                                getValue(
-                                    customer,
-                                    [
-                                        "Tarehe",
-                                        "tarehe"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                    </tr>
-
-                    `
-            )
-            .join("");
-
-}
-
-
-/* ==================================================
-   ADD CUSTOMER
-================================================== */
-
-async function addCustomer() {
-
-    const jina =
-        prompt(
-            "Ingiza jina la mteja:"
-        );
-
-
-    if (!jina) return;
-
-
-    const simu =
-        prompt(
-            "Ingiza namba ya simu:"
-        );
-
-
-    if (!simu) return;
-
-
-    const anwani =
-        prompt(
-            "Ingiza anwani:"
-        ) || "";
-
-
-    const pobox =
-        prompt(
-            "Ingiza P.O. Box:"
-        ) || "";
-
-
-    const email =
-        prompt(
-            "Ingiza email:"
-        ) || "";
-
-
-    showLoading(
-        "Inahifadhi mteja..."
-    );
-
-
-    try {
-
-        const result =
-            await api(
-                "addCustomer",
-                {
-                    jina,
-                    simu,
-                    anwani,
-                    pobox,
-                    email
-                }
-            );
-
-
-        hideLoading();
-
-
-        showSuccess(
-            result.message ||
-            "Mteja ameongezwa."
-        );
-
-
-        loadCustomers();
-
-        loadDashboard();
-
-    }
-
-    catch (error) {
-
-        hideLoading();
-
-        showError(
-            error.message
-        );
-
-    }
-
-}
-
-
-/* ==================================================
-   ITEMS
-================================================== */
-
-async function loadItems() {
-
-    const tbody =
-        document.getElementById(
-            "itemsTable"
-        );
-
-
-    if (!tbody) return;
-
-
-    try {
-
-        const items =
-            await api(
-                "getItems"
-            );
-
-
-        APP.items =
-            items || [];
-
-
-        renderItems(
-            APP.items
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-        renderError(
-            tbody,
-            4
-        );
-
-    }
-
-}
-
-
-function renderItems(
-    items
-) {
-
-    const tbody =
-        document.getElementById(
-            "itemsTable"
-        );
-
-
-    if (!tbody) return;
-
-
-    if (!items.length) {
-
-        tbody.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="4"
-                    class="empty-state"
-                >
-                    Hakuna vifaa bado.
-                </td>
-
-            </tr>
-
-        `;
-
-        return;
-
-    }
-
-
-    tbody.innerHTML =
-        items
-            .map(
-                item =>
-                    `
-
-                    <tr>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    item,
-                                    [
-                                        "Item ID",
-                                        "ID",
-                                        "id"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            <strong>
-                                ${escapeHtml(
-                                    getValue(
-                                        item,
-                                        [
-                                            "Jina",
-                                            "jina"
-                                        ]
-                                    )
-                                )}
-                            </strong>
-                        </td>
-
-                        <td>
-                            ${formatNumber(
-                                getValue(
-                                    item,
-                                    [
-                                        "Kiasi",
-                                        "kiasi"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatMoney(
-                                getValue(
-                                    item,
-                                    [
-                                        "Bei",
-                                        "bei"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                    </tr>
-
-                    `
-            )
-            .join("");
-
-}
-
-
-async function addItem() {
-
-    const jina =
-        prompt(
-            "Jina la kifaa:"
-        );
-
-
-    if (!jina) return;
-
-
-    const kiasi =
-        prompt(
-            "Kiasi:"
-        );
-
-
-    const bei =
-        prompt(
-            "Bei:"
-        );
-
-
-    showLoading(
-        "Inahifadhi kifaa..."
-    );
-
-
-    try {
-
-        const result =
-            await api(
-                "addItem",
-                {
-                    jina,
-                    kiasi,
-                    bei
-                }
-            );
-
-
-        hideLoading();
-
-
-        showSuccess(
-            result.message ||
-            "Kifaa kimeongezwa."
-        );
-
-
-        loadItems();
-
-    }
-
-    catch (error) {
-
-        hideLoading();
-
-        showError(
-            error.message
-        );
-
-    }
-
-}
-
-
-/* ==================================================
-   INVOICES
-================================================== */
-
-async function loadInvoices() {
-
-    const tbody =
-        document.getElementById(
-            "invoicesTable"
-        );
-
-
-    if (!tbody) return;
-
-
-    try {
-
-        const invoices =
-            await api(
-                "getInvoices"
-            );
-
-
-        APP.invoices =
-            invoices || [];
-
-
-        renderInvoices(
-            APP.invoices
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-        renderError(
-            tbody,
-            5
-        );
-
-    }
-
-}
-
-
-function renderInvoices(
-    invoices
-) {
-
-    const tbody =
-        document.getElementById(
-            "invoicesTable"
-        );
-
-
-    if (!tbody) return;
-
-
-    if (!invoices.length) {
-
-        tbody.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="5"
-                    class="empty-state"
-                >
-                    Hakuna invoices bado.
-                </td>
-
-            </tr>
-
-        `;
-
-        return;
-
-    }
-
-
-    tbody.innerHTML =
-        invoices
-            .slice()
-            .reverse()
-            .map(
-                invoice =>
-                    `
-
-                    <tr>
-
-                        <td>
-
-                            <strong>
-                                ${escapeHtml(
-                                    getInvoiceNumber(
-                                        invoice
-                                    )
-                                )}
-                            </strong>
-
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    invoice,
-                                    [
-                                        "Mteja",
-                                        "mteja"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatDate(
-                                getValue(
-                                    invoice,
-                                    [
-                                        "Tarehe",
-                                        "tarehe"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatMoney(
-                                getValue(
-                                    invoice,
-                                    [
-                                        "Total Charges",
-                                        "total charges"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${statusBadge(
-                                getValue(
-                                    invoice,
-                                    [
-                                        "Hali",
-                                        "Status"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                    </tr>
-
-                    `
-            )
-            .join("");
-
-}
-
-
-async function createInvoice() {
-
-    const mteja =
-        prompt(
-            "Jina la mteja:"
-        );
-
-
-    if (!mteja) return;
-
-
-    const jina =
-        prompt(
-            "Jina la kifaa:"
-        );
-
-
-    if (!jina) return;
-
-
-    const qty =
-        prompt(
-            "Quantity:"
-        );
-
-
-    const price =
-        prompt(
-            "Bei ya kifaa:"
+            }
         );
 
 
     const labour =
-        prompt(
-            "Labour:"
+        Number(
+            document.getElementById(
+                "invoiceLabour"
+            )?.value
         ) || 0;
 
 
     const discount =
-        prompt(
-            "Discount:"
+        Number(
+            document.getElementById(
+                "invoiceDiscount"
+            )?.value
         ) || 0;
 
 
-    const vifaa = [
+    const total =
+        Math.max(
+            0,
+            subtotal +
+            labour -
+            discount
+        );
 
-        {
 
-            jina,
+    const totalInput =
+        document.getElementById(
+            "invoiceTotal"
+        );
 
-            qty:
-                Number(qty) || 0,
 
-            price:
-                Number(price) || 0
+    if (totalInput) {
+
+        totalInput.value =
+            formatMoney(
+                total
+            );
+
+    }
+
+}
+
+
+/* ==================================================
+   PAYMENT FORM
+================================================== */
+
+function setupPaymentForm() {
+
+    const button =
+        document.getElementById(
+            "recordPaymentButton"
+        );
+
+
+    const card =
+        document.getElementById(
+            "paymentFormCard"
+        );
+
+
+    const cancel =
+        document.getElementById(
+            "cancelPaymentButton"
+        );
+
+
+    const form =
+        document.getElementById(
+            "paymentForm"
+        );
+
+
+    if (button) {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "block";
+
+                populateInvoiceSelects();
+
+            }
+        );
+
+    }
+
+
+    if (cancel) {
+
+        cancel.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "none";
+
+                form.reset();
+
+            }
+        );
+
+    }
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            async event => {
+
+                event.preventDefault();
+
+
+                const data = {
+
+                    invoiceNo:
+                        document.getElementById(
+                            "paymentInvoice"
+                        ).value,
+
+                    kiasi:
+                        document.getElementById(
+                            "paymentAmount"
+                        ).value,
+
+                    njia:
+                        document.getElementById(
+                            "paymentMethod"
+                        ).value
+
+                };
+
+
+                try {
+
+                    await api(
+                        "recordPayment",
+                        data
+                    );
+
+
+                    showToast(
+                        "Malipo yamehifadhiwa.",
+                        "success"
+                    );
+
+
+                    form.reset();
+
+
+                    card.style.display =
+                        "none";
+
+
+                    await loadPayments();
+
+                    await loadInvoices();
+
+                    await loadDashboard();
+
+
+                } catch (error) {
+
+                    showToast(
+                        error.message,
+                        "error"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   STAFF FORM
+================================================== */
+
+function setupStaffForm() {
+
+    const button =
+        document.getElementById(
+            "addStaffButton"
+        );
+
+
+    const card =
+        document.getElementById(
+            "staffFormCard"
+        );
+
+
+    const cancel =
+        document.getElementById(
+            "cancelStaffButton"
+        );
+
+
+    const form =
+        document.getElementById(
+            "staffForm"
+        );
+
+
+    if (button) {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "block";
+
+            }
+        );
+
+    }
+
+
+    if (cancel) {
+
+        cancel.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "none";
+
+                form.reset();
+
+            }
+        );
+
+    }
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            async event => {
+
+                event.preventDefault();
+
+
+                const data = {
+
+                    jina:
+                        document.getElementById(
+                            "staffName"
+                        ).value.trim(),
+
+                    simu:
+                        document.getElementById(
+                            "staffPhone"
+                        ).value.trim(),
+
+                    kiasi:
+                        document.getElementById(
+                            "staffRate"
+                        ).value
+
+                };
+
+
+                try {
+
+                    await api(
+                        "addStaff",
+                        data
+                    );
+
+
+                    showToast(
+                        "Fundi ameongezwa.",
+                        "success"
+                    );
+
+
+                    form.reset();
+
+
+                    card.style.display =
+                        "none";
+
+
+                    await loadStaff();
+
+
+                } catch (error) {
+
+                    showToast(
+                        error.message,
+                        "error"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   EXPENSE FORM
+================================================== */
+
+function setupExpenseForm() {
+
+    const button =
+        document.getElementById(
+            "addExpenseButton"
+        );
+
+
+    const card =
+        document.getElementById(
+            "expenseFormCard"
+        );
+
+
+    const cancel =
+        document.getElementById(
+            "cancelExpenseButton"
+        );
+
+
+    const form =
+        document.getElementById(
+            "expenseForm"
+        );
+
+
+    if (button) {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "block";
+
+                populateStaffSelect();
+
+                populateInvoiceSelects();
+
+            }
+        );
+
+    }
+
+
+    if (cancel) {
+
+        cancel.addEventListener(
+            "click",
+            () => {
+
+                card.style.display =
+                    "none";
+
+                form.reset();
+
+            }
+        );
+
+    }
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            async event => {
+
+                event.preventDefault();
+
+
+                const data = {
+
+                    project:
+                        document.getElementById(
+                            "expenseProject"
+                        ).value.trim(),
+
+                    aina:
+                        document.getElementById(
+                            "expenseType"
+                        ).value.trim(),
+
+                    sehemu:
+                        document.getElementById(
+                            "expenseLocation"
+                        ).value.trim(),
+
+                    fundi:
+                        getSelectText(
+                            "expenseStaff"
+                        ),
+
+                    siku:
+                        document.getElementById(
+                            "expenseDays"
+                        ).value,
+
+                    malazi:
+                        document.getElementById(
+                            "expenseAccommodation"
+                        ).value,
+
+                    usafiri:
+                        document.getElementById(
+                            "expenseTransport"
+                        ).value,
+
+                    chakula:
+                        document.getElementById(
+                            "expenseFood"
+                        ).value,
+
+                    vifaa:
+                        document.getElementById(
+                            "expenseEquipment"
+                        ).value,
+
+                    mengine:
+                        document.getElementById(
+                            "expenseOther"
+                        ).value,
+
+                    budget:
+                        document.getElementById(
+                            "expenseBudget"
+                        ).value,
+
+                    labourCharge:
+                        document.getElementById(
+                            "expenseLabourCharge"
+                        ).value,
+
+                    invoiceNo:
+                        document.getElementById(
+                            "expenseInvoice"
+                        ).value
+
+                };
+
+
+                try {
+
+                    await api(
+                        "addExpense",
+                        data
+                    );
+
+
+                    showToast(
+                        "Matumizi yamehifadhiwa.",
+                        "success"
+                    );
+
+
+                    form.reset();
+
+
+                    card.style.display =
+                        "none";
+
+
+                    await loadExpenses();
+
+                    await loadDashboard();
+
+                    await loadReports();
+
+
+                } catch (error) {
+
+                    showToast(
+                        error.message,
+                        "error"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+}
+
+
+/* ==================================================
+   SELECTS
+================================================== */
+
+function populateCustomerSelect() {
+
+    const select =
+        document.getElementById(
+            "invoiceCustomer"
+        );
+
+
+    if (!select) {
+        return;
+    }
+
+
+    select.innerHTML = `
+
+        <option value="">
+            Chagua Mteja
+        </option>
+
+    `;
+
+
+    customersData.forEach(
+        customer => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                customer["Jina"];
+
+
+            option.textContent =
+                customer["Jina"] +
+                " - " +
+                customer["Simu"];
+
+
+            select.appendChild(
+                option
+            );
 
         }
+    );
+
+}
+
+
+function populateInvoiceSelects() {
+
+    const selects = [
+
+        document.getElementById(
+            "paymentInvoice"
+        ),
+
+        document.getElementById(
+            "expenseInvoice"
+        )
 
     ];
 
 
-    showLoading(
-        "Inatengeneza invoice..."
-    );
+    selects.forEach(
+        select => {
+
+            if (!select) {
+                return;
+            }
 
 
-    try {
+            const current =
+                select.value;
 
-        const result =
-            await api(
-                "createInvoice",
-                {
-                    mteja,
 
-                    vifaa,
+            const firstText =
+                select.id ===
+                "paymentInvoice"
+                    ? "Chagua Invoice"
+                    : "Chagua Invoice";
 
-                    labour:
-                        Number(labour) || 0,
 
-                    discount:
-                        Number(discount) || 0
+            select.innerHTML = `
+
+                <option value="">
+                    ${firstText}
+                </option>
+
+            `;
+
+
+            invoicesData.forEach(
+                invoice => {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+
+                    option.value =
+                        invoice["Invoice No"];
+
+
+                    option.textContent =
+                        invoice["Invoice No"] +
+                        " - " +
+                        invoice["Mteja"] +
+                        " - " +
+                        formatMoney(
+                            invoice["Total Charges"]
+                        );
+
+
+                    select.appendChild(
+                        option
+                    );
+
                 }
             );
 
 
-        hideLoading();
+            if (current) {
 
+                select.value =
+                    current;
 
-        showSuccess(
-            `${result.message} Invoice: ${result.invoiceNo}`
-        );
+            }
 
-
-        loadInvoices();
-
-        loadDashboard();
-
-    }
-
-    catch (error) {
-
-        hideLoading();
-
-        showError(
-            error.message
-        );
-
-    }
+        }
+    );
 
 }
 
 
-/* ==================================================
-   PAYMENTS
-================================================== */
+function populateStaffSelect() {
 
-async function loadPayments() {
-
-    const tbody =
+    const select =
         document.getElementById(
-            "paymentsTable"
+            "expenseStaff"
         );
 
 
-    if (!tbody) return;
+    if (!select) {
+        return;
+    }
 
 
-    try {
+    select.innerHTML = `
 
-        const payments =
-            await api(
-                "getPayments"
+        <option value="">
+            Chagua Fundi
+        </option>
+
+    `;
+
+
+    staffData.forEach(
+        staff => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                staff["Staff ID"];
+
+
+            option.textContent =
+                staff["Jina"];
+
+
+            select.appendChild(
+                option
             );
 
-
-        APP.payments =
-            payments || [];
-
-
-        renderPayments(
-            APP.payments
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-        renderError(
-            tbody,
-            5
-        );
-
-    }
+        }
+    );
 
 }
 
 
-function renderPayments(
-    payments
+function getSelectText(
+    id
 ) {
 
-    const tbody =
+    const select =
         document.getElementById(
-            "paymentsTable"
+            id
         );
 
 
-    if (!tbody) return;
-
-
-    if (!payments.length) {
-
-        tbody.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="5"
-                    class="empty-state"
-                >
-                    Hakuna malipo bado.
-                </td>
-
-            </tr>
-
-        `;
-
-        return;
-
+    if (!select) {
+        return "";
     }
 
 
-    tbody.innerHTML =
-        payments
-            .slice()
-            .reverse()
-            .map(
-                payment =>
-                    `
-
-                    <tr>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    payment,
-                                    [
-                                        "Payment ID",
-                                        "ID",
-                                        "id"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    payment,
-                                    [
-                                        "Invoice No",
-                                        "invoice no"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatMoney(
-                                getValue(
-                                    payment,
-                                    [
-                                        "Kiasi",
-                                        "kiasi"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatDate(
-                                getValue(
-                                    payment,
-                                    [
-                                        "Tarehe",
-                                        "tarehe"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    payment,
-                                    [
-                                        "Njia",
-                                        "njia"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                    </tr>
-
-                    `
-            )
-            .join("");
-
-}
-
-
-async function recordPayment() {
-
-    const invoiceNo =
-        prompt(
-            "Invoice No:"
-        );
-
-
-    if (!invoiceNo) return;
-
-
-    const kiasi =
-        prompt(
-            "Kiasi cha malipo:"
-        );
-
-
-    if (!kiasi) return;
-
-
-    const njia =
-        prompt(
-            "Njia ya malipo: NMB, M-PESA au CASH"
-        );
-
-
-    if (!njia) return;
-
-
-    showLoading(
-        "Inahifadhi malipo..."
-    );
-
-
-    try {
-
-        const result =
-            await api(
-                "recordPayment",
-                {
-                    invoiceNo,
-
-                    kiasi:
-                        Number(kiasi),
-
-                    njia
-                }
-            );
-
-
-        hideLoading();
-
-
-        showSuccess(
-            result.message ||
-            "Malipo yamehifadhiwa."
-        );
-
-
-        loadPayments();
-
-        loadInvoices();
-
-        loadDashboard();
-
-    }
-
-    catch (error) {
-
-        hideLoading();
-
-        showError(
-            error.message
-        );
-
-    }
-
-}
-
-
-/* ==================================================
-   STAFF
-================================================== */
-
-async function loadStaff() {
-
-    const tbody =
-        document.getElementById(
-            "staffTable"
-        );
-
-
-    if (!tbody) return;
-
-
-    try {
-
-        const staff =
-            await api(
-                "getStaff"
-            );
-
-
-        APP.staff =
-            staff || [];
-
-
-        renderStaff(
-            APP.staff
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-        renderError(
-            tbody,
-            4
-        );
-
-    }
-
-}
-
-
-function renderStaff(
-    staff
-) {
-
-    const tbody =
-        document.getElementById(
-            "staffTable"
-        );
-
-
-    if (!tbody) return;
-
-
-    if (!staff.length) {
-
-        tbody.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="4"
-                    class="empty-state"
-                >
-                    Hakuna wafanyakazi bado.
-                </td>
-
-            </tr>
-
-        `;
-
-        return;
-
-    }
-
-
-    tbody.innerHTML =
-        staff
-            .map(
-                person =>
-                    `
-
-                    <tr>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    person,
-                                    [
-                                        "Staff ID",
-                                        "ID",
-                                        "id"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            <strong>
-                                ${escapeHtml(
-                                    getValue(
-                                        person,
-                                        [
-                                            "Jina",
-                                            "jina"
-                                        ]
-                                    )
-                                )}
-                            </strong>
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    person,
-                                    [
-                                        "Simu",
-                                        "simu"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatMoney(
-                                getValue(
-                                    person,
-                                    [
-                                        "Kiwango Kwa Siku",
-                                        "Kiwango kwa Siku",
-                                        "Kiwango",
-                                        "kiwango"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                    </tr>
-
-                    `
-            )
-            .join("");
-
-}
-
-
-async function addStaff() {
-
-    const jina =
-        prompt(
-            "Jina la fundi:"
-        );
-
-
-    if (!jina) return;
-
-
-    const simu =
-        prompt(
-            "Namba ya simu:"
-        ) || "";
-
-
-    const kiasi =
-        prompt(
-            "Kiwango kwa siku:"
-        );
-
-
-    showLoading(
-        "Inahifadhi fundi..."
-    );
-
-
-    try {
-
-        const result =
-            await api(
-                "addStaff",
-                {
-                    jina,
-
-                    simu,
-
-                    kiasi:
-                        Number(kiasi) || 0
-                }
-            );
-
-
-        hideLoading();
-
-
-        showSuccess(
-            result.message ||
-            "Fundi ameongezwa."
-        );
-
-
-        loadStaff();
-
-    }
-
-    catch (error) {
-
-        hideLoading();
-
-        showError(
-            error.message
-        );
-
-    }
-
-}
-
-
-/* ==================================================
-   EXPENSES
-================================================== */
-
-async function loadExpenses() {
-
-    const tbody =
-        document.getElementById(
-            "expensesTable"
-        );
-
-
-    if (!tbody) return;
-
-
-    try {
-
-        const expenses =
-            await api(
-                "getExpenses"
-            );
-
-
-        APP.expenses =
-            expenses || [];
-
-
-        renderExpenses(
-            APP.expenses
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-        renderError(
-            tbody,
-            6
-        );
-
-    }
-
-}
-
-
-function renderExpenses(
-    expenses
-) {
-
-    const tbody =
-        document.getElementById(
-            "expensesTable"
-        );
-
-
-    if (!tbody) return;
-
-
-    if (!expenses.length) {
-
-        tbody.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="6"
-                    class="empty-state"
-                >
-                    Hakuna matumizi bado.
-                </td>
-
-            </tr>
-
-        `;
-
-        return;
-
-    }
-
-
-    tbody.innerHTML =
-        expenses
-            .slice()
-            .reverse()
-            .map(
-                expense =>
-                    `
-
-                    <tr>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    expense,
-                                    [
-                                        "Expense ID",
-                                        "ID",
-                                        "id"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    expense,
-                                    [
-                                        "Project",
-                                        "project"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                getValue(
-                                    expense,
-                                    [
-                                        "Fundi",
-                                        "fundi"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatMoney(
-                                getValue(
-                                    expense,
-                                    [
-                                        "Gharama Zote-auto",
-                                        "Total Cost",
-                                        "total cost"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatMoney(
-                                getValue(
-                                    expense,
-                                    [
-                                        "Faida",
-                                        "profit"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatDate(
-                                getValue(
-                                    expense,
-                                    [
-                                        "Tarehe",
-                                        "tarehe"
-                                    ]
-                                )
-                            )}
-                        </td>
-
-                    </tr>
-
-                    `
-            )
-            .join("");
-
-}
-
-
-async function addExpense() {
-
-    const project =
-        prompt(
-            "Project:"
-        );
-
-
-    if (!project) return;
-
-
-    const aina =
-        prompt(
-            "Aina ya project:"
-        ) || "";
-
-
-    const fundi =
-        prompt(
-            "Jina la fundi:"
-        ) || "";
-
-
-    const sehemu =
-        prompt(
-            "Sehemu:"
-        ) || "";
-
-
-    const siku =
-        prompt(
-            "Idadi ya siku:"
-        ) || 0;
-
-
-    const malazi =
-        prompt(
-            "Malazi:"
-        ) || 0;
-
-
-    const usafiri =
-        prompt(
-            "Usafiri:"
-        ) || 0;
-
-
-    const chakula =
-        prompt(
-            "Chakula:"
-        ) || 0;
-
-
-    const vifaa =
-        prompt(
-            "Vifaa:"
-        ) || 0;
-
-
-    const mengine =
-        prompt(
-            "Mengine:"
-        ) || 0;
-
-
-    const invoiceNo =
-        prompt(
-            "Invoice No:"
-        ) || "";
-
-
-    const budget =
-        prompt(
-            "Budget:"
-        ) || 0;
-
-
-    const labourCharge =
-        prompt(
-            "Labour Charge:"
-        ) || 0;
-
-
-    showLoading(
-        "Inahifadhi matumizi..."
-    );
-
-
-    try {
-
-        const result =
-            await api(
-                "addExpense",
-                {
-                    project,
-
-                    aina,
-
-                    fundi,
-
-                    sehemu,
-
-                    siku:
-                        Number(siku),
-
-                    malazi:
-                        Number(malazi),
-
-                    usafiri:
-                        Number(usafiri),
-
-                    chakula:
-                        Number(chakula),
-
-                    vifaa:
-                        Number(vifaa),
-
-                    mengine:
-                        Number(mengine),
-
-                    invoiceNo,
-
-                    budget:
-                        Number(budget),
-
-                    labourCharge:
-                        Number(labourCharge)
-                }
-            );
-
-
-        hideLoading();
-
-
-        showSuccess(
-            result.message ||
-            "Matumizi yamehifadhiwa."
-        );
-
-
-        loadExpenses();
-
-        loadDashboard();
-
-    }
-
-    catch (error) {
-
-        hideLoading();
-
-        showError(
-            error.message
-        );
-
-    }
-
-}
-
-
-/* ==================================================
-   REPORTS
-================================================== */
-
-async function loadReports() {
-
-    showLoading(
-        "Inapakia ripoti..."
-    );
-
-
-    try {
-
-        const reports =
-            await api(
-                "getReports"
-            );
-
-
-        hideLoading();
-
-
-        APP.dashboard =
-            reports.dashboard;
-
-
-        updateDashboardStats(
-            reports.dashboard
-        );
-
-
-        console.log(
-            "Reports:",
-            reports
-        );
-
-
-        showSuccess(
-            "Ripoti zimehuishwa."
-        );
-
-    }
-
-    catch (error) {
-
-        hideLoading();
-
-        showError(
-            error.message
-        );
-
-    }
+    const option =
+        select.options[
+            select.selectedIndex
+        ];
+
+
+    return option
+        ? option.textContent
+        : "";
 
 }
 
@@ -2613,11 +3273,23 @@ async function loadReports() {
    SEARCH
 ================================================== */
 
-function initializeSearch() {
+function setupSearch() {
 
     const customerSearch =
         document.getElementById(
             "customerSearch"
+        );
+
+
+    const itemSearch =
+        document.getElementById(
+            "itemSearch"
+        );
+
+
+    const invoiceSearch =
+        document.getElementById(
+            "invoiceSearch"
         );
 
 
@@ -2627,20 +3299,23 @@ function initializeSearch() {
             "input",
             () => {
 
-                const query =
+                const term =
                     customerSearch.value
                         .toLowerCase()
                         .trim();
 
 
                 const filtered =
-                    APP.customers.filter(
+                    customersData.filter(
                         customer =>
-                            JSON.stringify(
+                            Object.values(
                                 customer
                             )
+                            .join(" ")
                             .toLowerCase()
-                            .includes(query)
+                            .includes(
+                                term
+                            )
                     );
 
 
@@ -2654,32 +3329,29 @@ function initializeSearch() {
     }
 
 
-    const itemSearch =
-        document.getElementById(
-            "itemSearch"
-        );
-
-
     if (itemSearch) {
 
         itemSearch.addEventListener(
             "input",
             () => {
 
-                const query =
+                const term =
                     itemSearch.value
                         .toLowerCase()
                         .trim();
 
 
                 const filtered =
-                    APP.items.filter(
+                    itemsData.filter(
                         item =>
-                            JSON.stringify(
+                            Object.values(
                                 item
                             )
+                            .join(" ")
                             .toLowerCase()
-                            .includes(query)
+                            .includes(
+                                term
+                            )
                     );
 
 
@@ -2693,32 +3365,29 @@ function initializeSearch() {
     }
 
 
-    const invoiceSearch =
-        document.getElementById(
-            "invoiceSearch"
-        );
-
-
     if (invoiceSearch) {
 
         invoiceSearch.addEventListener(
             "input",
             () => {
 
-                const query =
+                const term =
                     invoiceSearch.value
                         .toLowerCase()
                         .trim();
 
 
                 const filtered =
-                    APP.invoices.filter(
+                    invoicesData.filter(
                         invoice =>
-                            JSON.stringify(
+                            Object.values(
                                 invoice
                             )
+                            .join(" ")
                             .toLowerCase()
-                            .includes(query)
+                            .includes(
+                                term
+                            )
                     );
 
 
@@ -2735,121 +3404,90 @@ function initializeSearch() {
 
 
 /* ==================================================
-   HELPERS
+   DATE
 ================================================== */
 
-function setText(
-    id,
-    value
-) {
+function updateCurrentDate() {
 
     const element =
         document.getElementById(
-            id
+            "currentDate"
         );
 
 
-    if (element) {
-
-        element.textContent =
-            value;
-
-    }
-
-}
-
-
-function getValue(
-    object,
-    keys
-) {
-
-    if (!object) return "";
-
-
-    for (const key of keys) {
-
-        if (
-            Object.prototype.hasOwnProperty.call(
-                object,
-                key
-            )
-        ) {
-
-            return object[key];
-
-        }
-
+    if (!element) {
+        return;
     }
 
 
-    return "";
+    const now =
+        new Date();
+
+
+    element.textContent =
+        now.toLocaleDateString(
+            "sw-TZ",
+            {
+
+                weekday:
+                    "long",
+
+                year:
+                    "numeric",
+
+                month:
+                    "long",
+
+                day:
+                    "numeric"
+
+            }
+        );
 
 }
 
 
-function getInvoiceNumber(
-    invoice
-) {
-
-    return getValue(
-        invoice,
-        [
-            "Invoice No",
-            "invoice no",
-            "Invoice",
-            "invoice"
-        ]
-    );
-
-}
-
+/* ==================================================
+   MONEY
+================================================== */
 
 function formatMoney(
     value
 ) {
 
-    const number =
-        Number(value) || 0;
+    const amount =
+        Number(
+            value
+        ) || 0;
 
 
     return (
-        "TSh " +
-        number.toLocaleString(
-            "en-TZ"
+        "TZS " +
+        amount.toLocaleString(
+            "en-US"
         )
     );
 
 }
 
 
-function formatNumber(
-    value
-) {
-
-    return (
-        Number(value) || 0
-    )
-    .toLocaleString(
-        "en-TZ"
-    );
-
-}
-
+/* ==================================================
+   DATE FORMAT
+================================================== */
 
 function formatDate(
     value
 ) {
 
     if (!value) {
-
         return "-";
-
     }
 
 
     const date =
-        new Date(value);
+        new Date(
+            value
+        );
 
 
     if (
@@ -2858,80 +3496,43 @@ function formatDate(
         )
     ) {
 
-        return String(value);
+        return String(
+            value
+        );
 
     }
 
 
     return date.toLocaleDateString(
-        "sw-TZ"
+        "sw-TZ",
+        {
+
+            year:
+                "numeric",
+
+            month:
+                "short",
+
+            day:
+                "numeric"
+
+        }
     );
 
 }
 
 
-function statusBadge(
-    status
-) {
+/* ==================================================
+   HTML ESCAPE
+================================================== */
 
-    const value =
-        String(
-            status || "UNPAID"
-        )
-        .toUpperCase();
-
-
-    let className =
-        "status-unpaid";
-
-
-    if (
-        value === "PAID"
-    ) {
-
-        className =
-            "status-paid";
-
-    }
-
-    else if (
-        value === "PARTIAL"
-    ) {
-
-        className =
-            "status-partial";
-
-    }
-
-
-    return `
-
-        <span class="status-badge ${className}">
-
-            ${escapeHtml(value)}
-
-        </span>
-
-    `;
-
-}
-
-
-function escapeHtml(
+function escapeHTML(
     value
 ) {
 
-    if (
-        value === null ||
-        value === undefined
-    ) {
-
-        return "";
-
-    }
-
-
-    return String(value)
+    return String(
+        value ?? ""
+    )
 
         .replace(
             /&/g,
@@ -2961,155 +3562,75 @@ function escapeHtml(
 }
 
 
-function renderError(
-    tbody,
-    columns
-) {
-
-    tbody.innerHTML = `
-
-        <tr>
-
-            <td
-                colspan="${columns}"
-                class="empty-state"
-            >
-                Imeshindikana kupakia data.
-            </td>
-
-        </tr>
-
-    `;
-
-}
-
-
 /* ==================================================
-   NOTIFICATIONS
+   TOAST
 ================================================== */
 
-function showSuccess(
-    message
+function showToast(
+    message,
+    type = "success"
 ) {
 
-    alert(
-        "✓ " + message
+    const toast =
+        document.getElementById(
+            "toast"
+        );
+
+
+    const toastMessage =
+        document.getElementById(
+            "toastMessage"
+        );
+
+
+    const toastIcon =
+        document.getElementById(
+            "toastIcon"
+        );
+
+
+    if (!toast) {
+        return;
+    }
+
+
+    toastMessage.textContent =
+        message;
+
+
+    if (
+        type === "error"
+    ) {
+
+        toastIcon.className =
+            "fa-solid fa-circle-exclamation";
+
+    } else {
+
+        toastIcon.className =
+            "fa-solid fa-circle-check";
+
+    }
+
+
+    toast.style.display =
+        "block";
+
+
+    clearTimeout(
+        window.kashombaToastTimer
     );
 
-}
 
+    window.kashombaToastTimer =
+        setTimeout(
+            () => {
 
-function showError(
-    message
-) {
+                toast.style.display =
+                    "none";
 
-    alert(
-        "✕ " + message
-    );
-
-}
-
-
-/* ==================================================
-   LOADING
-================================================== */
-
-function showLoading(
-    message = "Inapakia..."
-) {
-
-    let loader =
-        document.getElementById(
-            "appLoader"
+            },
+            4000
         );
-
-
-    if (!loader) {
-
-        loader =
-            document.createElement(
-                "div"
-            );
-
-
-        loader.id =
-            "appLoader";
-
-
-        loader.innerHTML = `
-
-            <div class="loader-box">
-
-                <div class="spinner"></div>
-
-                <span id="loaderText">
-                    ${escapeHtml(message)}
-                </span>
-
-            </div>
-
-        `;
-
-
-        document.body.appendChild(
-            loader
-        );
-
-    }
-
-
-    const text =
-        document.getElementById(
-            "loaderText"
-        );
-
-
-    if (text) {
-
-        text.textContent =
-            message;
-
-    }
-
-
-    loader.classList.add(
-        "show"
-    );
 
 }
-
-
-function hideLoading() {
-
-    const loader =
-        document.getElementById(
-            "appLoader"
-        );
-
-
-    if (loader) {
-
-        loader.classList.remove(
-            "show"
-        );
-
-    }
-
-}
-
-
-/* ==================================================
-   GLOBAL ERROR HANDLER
-================================================== */
-
-window.addEventListener(
-    "error",
-    event => {
-
-        console.error(
-            "Frontend Error:",
-            event.error
-        );
-
-    }
-);
